@@ -1,29 +1,22 @@
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, FileResponse
-from pydantic import BaseModel
-from datetime import datetime
+import os
 import sqlite3
 import hashlib
-import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from fastapi import Request
-
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 app = FastAPI()
 
-
-
-
-@app.post("/api/asistencia")
-def registrar_asistencia(datos: AsistenciaReq):
-    ahora_peru = datetime.now(ZoneInfo("America/Lima"))
-    fecha_str = ahora_peru.strftime("%Y-%m-%d")
-    try:
-        hora_actual = datetime.strptime(datos.hora_reloj.strip(), "%H:%M:%S").time()
-    except Exception:
-        hora_actual = ahora_peru.time().replace(microsecond=0)
-    hora_str = hora_actual.strftime("%H:%M:%S")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.middleware("http")
 async def forzar_utf8(request: Request, call_next):
@@ -32,8 +25,6 @@ async def forzar_utf8(request: Request, call_next):
     if "application/json" in content_type and "charset" not in content_type:
         response.headers["content-type"] = "application/json; charset=utf-8"
     return response
-
-
 
 def encriptar(clave: str) -> str:
     return hashlib.sha256(clave.encode("utf-8")).hexdigest()
@@ -45,7 +36,6 @@ def iniciar_bd():
     c.execute("CREATE TABLE IF NOT EXISTS alumnos (codigo TEXT PRIMARY KEY, nombre TEXT, grado_seccion TEXT)")
     c.execute("CREATE TABLE IF NOT EXISTS asistencias (id INTEGER PRIMARY KEY AUTOINCREMENT, codigo_alumno TEXT, fecha TEXT, hora TEXT, estado TEXT, registrado_por TEXT)")
 
-    # Usuario Administrador solicitado + un Auxiliar de ejemplo
     usuarios_base = [
         ("MikeSanchez", encriptar("STEve123*"), "Mike Sánchez", "Administrador"),
         ("auxiliar01", encriptar("Aux7228*"), "Auxiliar de Turno", "Auxiliar")
@@ -63,7 +53,6 @@ def iniciar_bd():
 
 iniciar_bd()
 
-
 class LoginReq(BaseModel):
     usuario: str
     clave: str
@@ -74,15 +63,10 @@ class NuevoUsuarioReq(BaseModel):
     nombre: str
     rol: str
 
-class EscaneoQR(BaseModel):
-    codigo: str
-    registrado_por: str = "Sistema"
-
 class AsistenciaReq(BaseModel):
     codigo: str
     registrado_por: str = "Sistema"
-    hora_reloj: str = ""  # <-- Nuevo campo que recibe la hora exacta de pantalla
-
+    hora_reloj: str = ""
 
 @app.get("/", response_class=HTMLResponse)
 def ver_intranet():
@@ -91,17 +75,11 @@ def ver_intranet():
 
 @app.get("/escudo.png")
 def ver_escudo():
-    if os.path.exists("escudo.png"):
-        return FileResponse("escudo.png")
-    return FileResponse("escudo.jpg")
+    return FileResponse("escudo.png" if os.path.exists("escudo.png") else "escudo.jpg")
 
 @app.get("/banner_navidad.jpg")
 def ver_banner():
-    if os.path.exists("banner_navidad.jpg"):
-        return FileResponse("banner_navidad.jpg")
-    return FileResponse("banner_navidad.png")
-
-
+    return FileResponse("banner_navidad.jpg" if os.path.exists("banner_navidad.jpg") else "banner_navidad.png")
 
 @app.get("/html5-qrcode.min.js")
 def ver_libreria_qr():
@@ -114,7 +92,6 @@ def ver_manifest():
 @app.get("/sw.js")
 def ver_sw():
     return FileResponse("sw.js", media_type="application/javascript")
-
 
 @app.post("/api/login")
 def login(datos: LoginReq):
@@ -155,7 +132,7 @@ def registrar_asistencia(datos: AsistenciaReq):
 
     conn = sqlite3.connect("asistencia_7228.db")
     c = conn.cursor()
-    c.execute("SELECT nombre_completo, grado_seccion FROM alumnos WHERE codigo = ?", (datos.codigo.strip(),))
+    c.execute("SELECT nombre, grado_seccion FROM alumnos WHERE codigo = ?", (datos.codigo.strip(),))
     alumno = c.fetchone()
 
     if not alumno:
@@ -178,8 +155,3 @@ def registrar_asistencia(datos: AsistenciaReq):
         "hora": hora_str,
         "estado": estado
     }
-
-@app.get("/manifest.json")
-def ver_manifest():
-    return FileResponse("manifest.json", media_type="application/manifest+json")
-
