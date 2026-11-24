@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import hashlib
-from datetime import datetime
+from datetime import datetime, time
 from zoneinfo import ZoneInfo
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, FileResponse
@@ -38,6 +38,7 @@ def iniciar_bd():
 
     usuarios_base = [
         ("MikeSanchez", encriptar("STEve123*"), "Mike Sánchez", "Administrador"),
+        ("GonzaloSembrera", encriptar("GonzaSem123*"), "Gonzalo Sembrera", "Auxiliar"),
         ("auxiliar01", encriptar("Aux7228*"), "Auxiliar de Turno", "Auxiliar")
     ]
     c.executemany("INSERT OR IGNORE INTO usuarios VALUES (?, ?, ?, ?)", usuarios_base)
@@ -52,6 +53,27 @@ def iniciar_bd():
     conn.close()
 
 iniciar_bd()
+
+def evaluar_turno_y_estado(hora_actual: time, turno: str) -> str:
+    if turno == "Tarde":
+        if hora_actual <= time(13, 5, 59):
+            return "Puntual (Tarde)"
+        elif hora_actual <= time(14, 30, 59):
+            return "Tardanza (Tarde)"
+        elif hora_actual >= time(18, 10, 0):
+            return "Salida (Tarde)"
+        else:
+            return "Fuera de Horario (Tarde)"
+    else:
+        # Turno Mañana (por defecto)
+        if hora_actual <= time(8, 5, 59):
+            return "Puntual (Mañana)"
+        elif hora_actual <= time(10, 0, 59):
+            return "Tardanza (Mañana)"
+        elif hora_actual >= time(12, 45, 0):
+            return "Salida (Mañana)"
+        else:
+            return "Fuera de Horario (Mañana)"
 
 class LoginReq(BaseModel):
     usuario: str
@@ -68,12 +90,7 @@ class AsistenciaReq(BaseModel):
     codigo: str
     registrado_por: str = "Sistema"
     hora_reloj: str = ""
-
-@app.post("/api/usuarios")
-def crear_usuario(datos: NuevoUsuarioReq):
-    if datos.solicitante != "MikeSanchez":
-        return {"ok": False, "mensaje": "Acceso denegado: Solo MikeSanchez tiene permisos CRUD."}
-    # ... resto de la inserción
+    turno: str = "Mañana"
 
 @app.get("/", response_class=HTMLResponse)
 def ver_intranet():
@@ -109,10 +126,12 @@ def login(datos: LoginReq):
     conn.close()
     if not user:
         return {"ok": False, "mensaje": "Usuario o contraseña incorrectos"}
-    return {"ok": True, "usuario": datos.usuario, "nombre": user[0], "rol": user[1]}
+    return {"ok": True, "usuario": datos.usuario, "nombre": user, "rol": user}
 
 @app.post("/api/usuarios")
 def crear_usuario(datos: NuevoUsuarioReq):
+    if datos.solicitante != "MikeSanchez":
+        return {"ok": False, "mensaje": "Acceso denegado: Solo MikeSanchez tiene permisos CRUD."}
     conn = sqlite3.connect("asistencia_7228.db")
     c = conn.cursor()
     try:
@@ -135,7 +154,7 @@ def registrar_asistencia(datos: AsistenciaReq):
         hora_actual = ahora_peru.time().replace(microsecond=0)
 
     hora_str = hora_actual.strftime("%H:%M:%S")
-    estado = "Tardanza" if hora_actual > datetime.strptime("08:00:59", "%H:%M:%S").time() else "Puntual"
+    estado = evaluar_turno_y_estado(hora_actual, datos.turno)
 
     conn = sqlite3.connect("asistencia_7228.db")
     c = conn.cursor()
@@ -146,7 +165,7 @@ def registrar_asistencia(datos: AsistenciaReq):
         conn.close()
         return {"ok": False, "mensaje": f"Código QR no registrado: {datos.codigo}"}
 
-    nombre, grado = alumno[0], alumno[1]
+    nombre, grado = alumno, alumno
     c.execute(
         "INSERT INTO asistencias (codigo_alumno, fecha, hora, estado, registrado_por) VALUES (?, ?, ?, ?, ?)",
         (datos.codigo.strip(), fecha_str, hora_str, estado, datos.registrado_por)
