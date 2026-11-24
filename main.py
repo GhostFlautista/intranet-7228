@@ -5,10 +5,25 @@ from datetime import datetime
 import sqlite3
 import hashlib
 import os
+from datetime import datetime
+from zoneinfo import ZoneInfo
+from fastapi import Request
+
 
 app = FastAPI()
 
-from fastapi import Request
+
+
+
+@app.post("/api/asistencia")
+def registrar_asistencia(datos: AsistenciaReq):
+    ahora_peru = datetime.now(ZoneInfo("America/Lima"))
+    fecha_str = ahora_peru.strftime("%Y-%m-%d")
+    try:
+        hora_actual = datetime.strptime(datos.hora_reloj.strip(), "%H:%M:%S").time()
+    except Exception:
+        hora_actual = ahora_peru.time().replace(microsecond=0)
+    hora_str = hora_actual.strftime("%H:%M:%S")
 
 @app.middleware("http")
 async def forzar_utf8(request: Request, call_next):
@@ -48,6 +63,7 @@ def iniciar_bd():
 
 iniciar_bd()
 
+
 class LoginReq(BaseModel):
     usuario: str
     clave: str
@@ -61,6 +77,12 @@ class NuevoUsuarioReq(BaseModel):
 class EscaneoQR(BaseModel):
     codigo: str
     registrado_por: str = "Sistema"
+
+class AsistenciaReq(BaseModel):
+    codigo: str
+    registrado_por: str = "Sistema"
+    hora_reloj: str = ""  # <-- Nuevo campo que recibe la hora exacta de pantalla
+
 
 @app.get("/", response_class=HTMLResponse)
 def ver_intranet():
@@ -119,22 +141,43 @@ def crear_usuario(datos: NuevoUsuarioReq):
         conn.close()
 
 @app.post("/api/asistencia")
-def registrar_asistencia(datos: EscaneoQR):
-    ahora = datetime.now()
+def registrar_asistencia(datos: AsistenciaReq):
+    ahora_peru = datetime.now(ZoneInfo("America/Lima"))
+    fecha_str = ahora_peru.strftime("%Y-%m-%d")
+
+    try:
+        hora_actual = datetime.strptime(datos.hora_reloj.strip(), "%H:%M:%S").time()
+    except Exception:
+        hora_actual = ahora_peru.time().replace(microsecond=0)
+
+    hora_str = hora_actual.strftime("%H:%M:%S")
+    estado = "Tardanza" if hora_actual > datetime.strptime("08:00:59", "%H:%M:%S").time() else "Puntual"
+
     conn = sqlite3.connect("asistencia_7228.db")
     c = conn.cursor()
-    c.execute("SELECT nombre, grado_seccion FROM alumnos WHERE codigo = ?", (datos.codigo,))
+    c.execute("SELECT nombre_completo, grado_seccion FROM alumnos WHERE codigo = ?", (datos.codigo.strip(),))
     alumno = c.fetchone()
+
     if not alumno:
         conn.close()
-        return {"ok": False, "mensaje": "Código no encontrado: " + datos.codigo}
-    nombre, grado = alumno
-    estado = "Tardanza" if (ahora.hour >= 8 and (ahora.hour > 8 or ahora.minute > 0)) else "Puntual"
-    c.execute("INSERT INTO asistencias (codigo_alumno, fecha, hora, estado, registrado_por) VALUES (?, ?, ?, ?, ?)",
-              (datos.codigo, ahora.strftime("%Y-%m-%d"), ahora.strftime("%H:%M:%S"), estado, datos.registrado_por))
+        return {"ok": False, "mensaje": f"Código QR no registrado: {datos.codigo}"}
+
+    nombre, grado = alumno[0], alumno[1]
+    c.execute(
+        "INSERT INTO asistencias (codigo_alumno, fecha, hora, estado, registrado_por) VALUES (?, ?, ?, ?, ?)",
+        (datos.codigo.strip(), fecha_str, hora_str, estado, datos.registrado_por)
+    )
     conn.commit()
     conn.close()
-    return {"ok": True, "codigo": datos.codigo, "nombre": nombre, "grado": grado, "hora": ahora.strftime("%H:%M:%S"), "estado": estado}
+
+    return {
+        "ok": True,
+        "codigo": datos.codigo.strip(),
+        "nombre": nombre,
+        "grado": grado,
+        "hora": hora_str,
+        "estado": estado
+    }
 
 @app.get("/manifest.json")
 def ver_manifest():
