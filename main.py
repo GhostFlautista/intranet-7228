@@ -58,6 +58,7 @@ class LoginReq(BaseModel):
     clave: str
 
 class NuevoUsuarioReq(BaseModel):
+    solicitante: str = ""
     usuario: str
     clave: str
     nombre: str
@@ -67,6 +68,12 @@ class AsistenciaReq(BaseModel):
     codigo: str
     registrado_por: str = "Sistema"
     hora_reloj: str = ""
+
+@app.post("/api/usuarios")
+def crear_usuario(datos: NuevoUsuarioReq):
+    if datos.solicitante != "MikeSanchez":
+        return {"ok": False, "mensaje": "Acceso denegado: Solo MikeSanchez tiene permisos CRUD."}
+    # ... resto de la inserción
 
 @app.get("/", response_class=HTMLResponse)
 def ver_intranet():
