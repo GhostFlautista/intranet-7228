@@ -139,13 +139,13 @@ def login(datos: LoginReq):
     user = c.fetchone()
     conn.close()
     if not user:
-        return {"ok": False, "mensaje": "Nueva versión 2.3 disponible: Reactivación automática de cámara al desbloquear pantalla."}
+        return {"ok": False, "mensaje": "Nueva versión 2.4 disponible: Filtro de fecha flexible para reportes Excel."}
     return {"ok": True, "usuario": datos.usuario, "nombre": user[0], "rol": user[1]}
 
 @app.post("/api/usuarios")
 def crear_usuario(datos: NuevoUsuarioReq):
     if datos.solicitante != "MikeSanchez":
-        return {"ok": False, "mensaje": "Nueva versión 2.3 disponible: Reactivación automática de cámara al desbloquear pantalla."}
+        return {"ok": False, "mensaje": "Nueva versión 2.4 disponible: Filtro de fecha flexible para reportes Excel."}
     conn = sqlite3.connect("asistencia_7228.db")
     c = conn.cursor()
     try:
@@ -157,7 +157,7 @@ def crear_usuario(datos: NuevoUsuarioReq):
         conn.commit()
         return {"ok": True, "mensaje": f"Usuario {datos.usuario} ({datos.rol}) creado correctamente"}
     except sqlite3.IntegrityError:
-        return {"ok": False, "mensaje": "Nueva versión 2.3 disponible: Reactivación automática de cámara al desbloquear pantalla."}
+        return {"ok": False, "mensaje": "Nueva versión 2.4 disponible: Filtro de fecha flexible para reportes Excel."}
     finally:
         conn.close()
 
@@ -232,9 +232,9 @@ def obtener_asistencias_padre(usuario_padre: str):
 @app.get("/api/version")
 def verificar_version():
     return {
-        "version": "2.3",
+        "version": "2.4",
         "obligatoria": False,
-        "mensaje": "Nueva versión 2.3 disponible: Reactivación automática de cámara al desbloquear pantalla.",
+        "mensaje": "Nueva versión 2.4 disponible: Filtro de fecha flexible para reportes Excel.",
         "texto_turno_tarde": "Turno Tarde (Ingreso 1:00pm | Salida 6:10pm)"
     }
 
@@ -264,8 +264,12 @@ def descargar_reporte_excel(fecha: str = "", grado: str = ""):
     """
     params = []
     if fecha.strip():
-        query += " AND a.fecha = ?"
-        params.append(fecha.strip())
+        f_iso = fecha.strip()
+        partes = f_iso.split("-")
+        f_latam = f"{partes[2]}/{partes[1]}/{partes[0]}" if len(partes) == 3 else f_iso
+        query += " AND (a.fecha LIKE ? OR a.fecha LIKE ?)"
+        params.append(f"%{f_iso}%")
+        params.append(f"%{f_latam}%")
     if grado.strip():
         query += " AND al.grado_seccion LIKE ?"
         params.append(f"%{grado.strip()}%")
