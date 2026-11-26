@@ -227,7 +227,7 @@ def obtener_asistencias_padre(usuario_padre: str):
             "hora": f[5],
             "estado": f[6]
         })
-    return {"ok": True, "registros": registros}nn
+    return {"ok": True, "registros": registros}
 
 @app.get("/api/version")
 def verificar_version():
