@@ -232,10 +232,10 @@ def obtener_asistencias_padre(usuario_padre: str):
 @app.get("/api/version")
 def verificar_version():
     return {
-        "version": "3.0",
+        "version": "3.1",
         "obligatoria": False,
         "mensaje": "Nueva versión 3.0 disponible: Pantalla de inicio actualizada y menú inferior completo.",
-        "url_apk": "https://github.com/GhostFlautista/intranet-7228/releases/download/v3.0/app-debug.apk"
+        "url_apk": "https://github.com/GhostFlautista/intranet-7228/releases/download/v3.1/app-debug.apk"
     }
 class PerfilModel(BaseModel):
     usuario: str
