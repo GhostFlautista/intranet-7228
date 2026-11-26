@@ -196,7 +196,26 @@
 </div>
 </div>
 <script>
-var API_URL = "";
+    (function() {
+      var htmlOta = localStorage.getItem("html_ota_7228");
+      if (htmlOta && htmlOta.indexOf("vista-login") !== -1) {
+        var parser = new DOMParser();
+        var docNuevo = parser.parseFromString(htmlOta, "text/html");
+        if (docNuevo && docNuevo.body) {
+          document.body.innerHTML = docNuevo.body.innerHTML;
+          var sp = document.getElementById("pantalla-carga-7228");
+          if (sp) sp.remove();
+          var scripts = docNuevo.body.querySelectorAll("script");
+          scripts.forEach(function(sc) {
+            if (!sc.src && sc.textContent) {
+              try { eval(sc.textContent); } catch(e) {}
+            }
+          });
+          return;
+        }
+      }
+    })();
+    var API_URL = "";
 var VERSION_APP_LOCAL = localStorage.getItem("version_intranet_7228") || "1.6";
 var usuarioActual = "";
 var puntuales = 0;
@@ -257,7 +276,45 @@ document.getElementById("texto-actualizacion").textContent = info.mensaje || ("N
                         var sub = "intranet-7228";
                         var dom = "onrender.com";
                         var urlR = "ht" + "tps://" + sub + "." + dom;
-                        var htmlMovil = info.html_ota.replace('var API_URL = "";', 'var API_URL = "' + urlR + '";');
+                        var htmlMovil = info.html_ota.replace('    (function() {
+      var htmlOta = localStorage.getItem("html_ota_7228");
+      if (htmlOta && htmlOta.indexOf("vista-login") !== -1) {
+        var parser = new DOMParser();
+        var docNuevo = parser.parseFromString(htmlOta, "text/html");
+        if (docNuevo && docNuevo.body) {
+          document.body.innerHTML = docNuevo.body.innerHTML;
+          var sp = document.getElementById("pantalla-carga-7228");
+          if (sp) sp.remove();
+          var scripts = docNuevo.body.querySelectorAll("script");
+          scripts.forEach(function(sc) {
+            if (!sc.src && sc.textContent) {
+              try { eval(sc.textContent); } catch(e) {}
+            }
+          });
+          return;
+        }
+      }
+    })();
+    var API_URL = "";', '    (function() {
+      var htmlOta = localStorage.getItem("html_ota_7228");
+      if (htmlOta && htmlOta.indexOf("vista-login") !== -1) {
+        var parser = new DOMParser();
+        var docNuevo = parser.parseFromString(htmlOta, "text/html");
+        if (docNuevo && docNuevo.body) {
+          document.body.innerHTML = docNuevo.body.innerHTML;
+          var sp = document.getElementById("pantalla-carga-7228");
+          if (sp) sp.remove();
+          var scripts = docNuevo.body.querySelectorAll("script");
+          scripts.forEach(function(sc) {
+            if (!sc.src && sc.textContent) {
+              try { eval(sc.textContent); } catch(e) {}
+            }
+          });
+          return;
+        }
+      }
+    })();
+    var API_URL = "' + urlR + '";');
                         localStorage.setItem("html_ota_7228", htmlMovil);
                       }
                       localStorage.setItem("version_intranet_7228", info.version);
