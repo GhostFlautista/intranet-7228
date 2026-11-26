@@ -35,11 +35,13 @@ def iniciar_bd():
     c.execute("CREATE TABLE IF NOT EXISTS usuarios (usuario TEXT PRIMARY KEY, clave TEXT, nombre TEXT, rol TEXT)")
     c.execute("CREATE TABLE IF NOT EXISTS alumnos (codigo TEXT PRIMARY KEY, nombre TEXT, grado_seccion TEXT)")
     c.execute("CREATE TABLE IF NOT EXISTS asistencias (id INTEGER PRIMARY KEY AUTOINCREMENT, codigo_alumno TEXT, fecha TEXT, hora TEXT, estado TEXT, registrado_por TEXT)")
+    c.execute("CREATE TABLE IF NOT EXISTS padre_alumno (usuario_padre TEXT, codigo_alumno TEXT, PRIMARY KEY (usuario_padre, codigo_alumno))")
 
     usuarios_base = [
         ("MikeSanchez", encriptar("STEve123*"), "Mike Sánchez", "Administrador"),
         ("GonzaloSembrera", encriptar("GonzaSem123*"), "Gonzalo Sembrera", "Auxiliar"),
-        ("auxiliar01", encriptar("Aux7228*"), "Auxiliar de Turno", "Auxiliar")
+        ("auxiliar01", encriptar("Aux7228*"), "Auxiliar de Turno", "Auxiliar"),
+        ("PadreQuispe", encriptar("Padre7228*"), "Sr. Carlos Quispe (Apoderado)", "Padre")
     ]
     c.executemany("INSERT OR IGNORE INTO usuarios VALUES (?, ?, ?, ?)", usuarios_base)
 
@@ -49,6 +51,10 @@ def iniciar_bd():
         ("ALU-7228-003", "Flores Chávez, Camila Andrea", "5° 'A' Primaria")
     ]
     c.executemany("INSERT OR IGNORE INTO alumnos VALUES (?, ?, ?)", alumnos_demo)
+
+    # Vincular al padre de ejemplo con su hija ALU-7228-001
+    c.execute("INSERT OR IGNORE INTO padre_alumno VALUES (?, ?)", ("PadreQuispe", "ALU-7228-001"))
+
     conn.commit()
     conn.close()
 
@@ -65,7 +71,6 @@ def evaluar_turno_y_estado(hora_actual: time, turno: str) -> str:
         else:
             return "Fuera de Horario (Tarde)"
     else:
-        # Turno Mañana (por defecto)
         if hora_actual <= time(8, 5, 59):
             return "Puntual (Mañana)"
         elif hora_actual <= time(10, 0, 59):
@@ -85,6 +90,7 @@ class NuevoUsuarioReq(BaseModel):
     clave: str
     nombre: str
     rol: str
+    codigo_hijo: str = ""
 
 class AsistenciaReq(BaseModel):
     codigo: str
@@ -104,6 +110,14 @@ def ver_escudo():
 @app.get("/banner_navidad.jpg")
 def ver_banner():
     return FileResponse("banner_navidad.jpg" if os.path.exists("banner_navidad.jpg") else "banner_navidad.png")
+
+@app.get("/peruano_canadiense.jpg")
+def ver_fondo_colegio():
+    return FileResponse("peruano_canadiense.jpg")
+
+@app.get("/fondo_app.jpg")
+def ver_fondo_app():
+    return FileResponse("fondo_app.jpg" if os.path.exists("fondo_app.jpg") else "fondo_app.png")
 
 @app.get("/html5-qrcode.min.js")
 def ver_libreria_qr():
@@ -126,7 +140,7 @@ def login(datos: LoginReq):
     conn.close()
     if not user:
         return {"ok": False, "mensaje": "Usuario o contraseña incorrectos"}
-    return {"ok": True, "usuario": datos.usuario, "nombre": user, "rol": user}
+    return {"ok": True, "usuario": datos.usuario, "nombre": user[0], "rol": user[1]}
 
 @app.post("/api/usuarios")
 def crear_usuario(datos: NuevoUsuarioReq):
@@ -136,6 +150,10 @@ def crear_usuario(datos: NuevoUsuarioReq):
     c = conn.cursor()
     try:
         c.execute("INSERT INTO usuarios VALUES (?, ?, ?, ?)", (datos.usuario, encriptar(datos.clave), datos.nombre, datos.rol))
+        if datos.rol == "Padre" and datos.codigo_hijo.strip():
+            for cod_h in datos.codigo_hijo.split(","):
+                if cod_h.strip():
+                    c.execute("INSERT OR IGNORE INTO padre_alumno VALUES (?, ?)", (datos.usuario, cod_h.strip()))
         conn.commit()
         return {"ok": True, "mensaje": f"Usuario {datos.usuario} ({datos.rol}) creado correctamente"}
     except sqlite3.IntegrityError:
@@ -165,7 +183,7 @@ def registrar_asistencia(datos: AsistenciaReq):
         conn.close()
         return {"ok": False, "mensaje": f"Código QR no registrado: {datos.codigo}"}
 
-    nombre, grado = alumno, alumno
+    nombre, grado = alumno[0], alumno[1]
     c.execute(
         "INSERT INTO asistencias (codigo_alumno, fecha, hora, estado, registrado_por) VALUES (?, ?, ?, ?, ?)",
         (datos.codigo.strip(), fecha_str, hora_str, estado, datos.registrado_por)
@@ -181,3 +199,32 @@ def registrar_asistencia(datos: AsistenciaReq):
         "hora": hora_str,
         "estado": estado
     }
+
+@app.get("/api/padre/asistencias/{usuario_padre}")
+def obtener_asistencias_padre(usuario_padre: str):
+    conn = sqlite3.connect("asistencia_7228.db")
+    c = conn.cursor()
+    c.execute("""
+        SELECT a.id, al.codigo, al.nombre, al.grado_seccion, a.fecha, a.hora, a.estado
+        FROM asistencias a
+        JOIN padre_alumno pa ON a.codigo_alumno = pa.codigo_alumno
+        JOIN alumnos al ON al.codigo = a.codigo_alumno
+        WHERE pa.usuario_padre = ?
+        ORDER BY a.id DESC
+        LIMIT 20
+    """, (usuario_padre,))
+    filas = c.fetchall()
+    conn.close()
+
+    registros = []
+    for f in filas:
+        registros.append({
+            "id": f[0],
+            "codigo": f[1],
+            "nombre": f[2],
+            "grado": f[3],
+            "fecha": f[4],
+            "hora": f[5],
+            "estado": f[6]
+        })
+    return {"ok": True, "registros": registros}
