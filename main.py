@@ -228,3 +228,12 @@ def obtener_asistencias_padre(usuario_padre: str):
             "estado": f[6]
         })
     return {"ok": True, "registros": registros}
+
+@app.get("/api/version")
+def verificar_version():
+    return {
+        "version": "1.1",
+        "obligatoria": False,
+        "mensaje": "Nueva versión 1.1 disponible: Incluye Portal de Padres, turnos Mañana/Tarde y mejoras en el escáner.",
+        "url_apk": "https://github.com"
+    }
