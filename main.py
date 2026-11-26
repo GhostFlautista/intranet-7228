@@ -139,13 +139,13 @@ def login(datos: LoginReq):
     user = c.fetchone()
     conn.close()
     if not user:
-        return {"ok": False, "mensaje": "Nueva versión 2.2 disponible: Reporte Excel completo con todas las columnas y datos."}
+        return {"ok": False, "mensaje": "Nueva versión 2.3 disponible: Reactivación automática de cámara al desbloquear pantalla."}
     return {"ok": True, "usuario": datos.usuario, "nombre": user[0], "rol": user[1]}
 
 @app.post("/api/usuarios")
 def crear_usuario(datos: NuevoUsuarioReq):
     if datos.solicitante != "MikeSanchez":
-        return {"ok": False, "mensaje": "Nueva versión 2.2 disponible: Reporte Excel completo con todas las columnas y datos."}
+        return {"ok": False, "mensaje": "Nueva versión 2.3 disponible: Reactivación automática de cámara al desbloquear pantalla."}
     conn = sqlite3.connect("asistencia_7228.db")
     c = conn.cursor()
     try:
@@ -157,7 +157,7 @@ def crear_usuario(datos: NuevoUsuarioReq):
         conn.commit()
         return {"ok": True, "mensaje": f"Usuario {datos.usuario} ({datos.rol}) creado correctamente"}
     except sqlite3.IntegrityError:
-        return {"ok": False, "mensaje": "Nueva versión 2.2 disponible: Reporte Excel completo con todas las columnas y datos."}
+        return {"ok": False, "mensaje": "Nueva versión 2.3 disponible: Reactivación automática de cámara al desbloquear pantalla."}
     finally:
         conn.close()
 
@@ -232,9 +232,9 @@ def obtener_asistencias_padre(usuario_padre: str):
 @app.get("/api/version")
 def verificar_version():
     return {
-        "version": "2.2",
+        "version": "2.3",
         "obligatoria": False,
-        "mensaje": "Nueva versión 2.2 disponible: Reporte Excel completo con todas las columnas y datos.",
+        "mensaje": "Nueva versión 2.3 disponible: Reactivación automática de cámara al desbloquear pantalla.",
         "texto_turno_tarde": "Turno Tarde (Ingreso 1:00pm | Salida 6:10pm)"
     }
 
