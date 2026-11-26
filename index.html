@@ -1,319 +1,444 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#0033CC" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="apple-touch-icon" href="/escudo.png" />
-
-
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Intranet | I.E. 7228 Peruano Canadiense</title>
-  <script src="/html5-qrcode.min.js"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js");
-    }
-  </script>
-    <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-    body { background: #f1f5f9; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
-    
-    /* Banner Navideño en la cabecera principal */
-    header { 
-      background: linear-gradient(90deg, rgba(0, 20, 60, 0.72), rgba(0, 35, 100, 0.55)), url('/banner_navidad.jpg');
-      background-size: cover;
-      background-position: center;
-      color: white; 
-      border-bottom: 5px solid #D32F2F; 
-      padding: 16px 24px; 
-    }
-
-    .header-box { max-width: 1150px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 15px; }
-    .brand { display: flex; align-items: center; gap: 14px; }
-    .logo-circle { width: 62px; height: 62px; border-radius: 50%; background: white; border: 3px solid #FACC15; padding: 3px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    .logo-circle img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
-    .brand h1 { font-size: 20px; font-weight: 800; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); }
-    .lema-tag { background: #FACC15; color: #002288; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 4px; margin-left: 8px; text-shadow: none; }
-    .brand p { font-size: 12px; color: #f8fafc; margin-top: 3px; text-shadow: 1px 1px 3px rgba(0,0,0,0.9); }
-    #reloj { background: rgba(0, 20, 70, 0.85); border: 1px solid #FACC15; color: #FDE047; padding: 6px 12px; border-radius: 6px; font-family: monospace; font-weight: bold; }
-    .btn-salir { background: #D32F2F; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-left: 10px; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intranet 7228 - Control de Asistencia</title>
+  <script src="html5-qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+    body { background: #f0f4f8; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
     .hidden { display: none !important; }
+    .banner-navidad { width: 100%; max-height: 150px; object-fit: cover; display: block; border-bottom: 3px solid #dc2626; }
+    header { background: linear-gradient(90deg, #002288, #0033CC); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-left img { width: 45px; height: 45px; border-radius: 50%; background: white; padding: 2px; }
+    .reloj-box { background: #facc15; color: #002288; font-weight: bold; padding: 6px 14px; border-radius: 20px; font-size: 16px; }
+    .btn-salir { background: #dc2626; color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    main { flex: 1; }
+    .login-card { max-width: 380px; margin: 35px auto; background: rgba(255, 255, 255, 0.84); backdrop-filter: blur(4px); padding: 28px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+    .login-card img { width: 85px; margin-bottom: 10px; }
+    .login-card h2 { color: #0033CC; margin-bottom: 5px; font-size: 20px; }
+    .login-card p { color: #64748b; font-size: 13px; margin-bottom: 20px; }
+    input, select { width: 100%; padding: 12px; margin: 8px 0 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; }
+    .pass-wrapper { position: relative; margin: 8px 0 15px; }
+    .pass-wrapper input { margin: 0; padding-right: 44px; }
+    .toggle-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px; color: #475569; padding: 4px; }
+    .btn-primary { width: 100%; background: #0033CC; color: white; border: none; padding: 13px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
+    .btn-primary:disabled { background: #94a3b8; }
+    .error-msg { color: #dc2626; font-size: 13px; margin-top: 10px; font-weight: 500; }
+    .container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
+    .card { background: white; padding: 20px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    .stat-box { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-bottom: 4px solid #0033CC; }
+    .stat-box.tarde { border-bottom-color: #d97706; }
+    .stat-num { font-size: 26px; font-weight: bold; color: #0033CC; }
+    .stat-box.tarde .stat-num { color: #d97706; }
+    .alerta { padding: 12px; border-radius: 8px; margin: 12px 0; font-size: 14px; text-align: center; }
+    .alerta-ok { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .alerta-tarde { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .alerta-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f8fafc; color: #475569; }
+    .manual-row { display: flex; gap: 8px; margin-top: 12px; }
+    .manual-row input { margin: 0; }
+    .manual-row button { width: auto; padding: 0 18px; }
+    footer { background: #002288; color: #e2e8f0; text-align: center; padding: 14px 10px; font-size: 12px; margin-top: 30px; }
+  
+    main { position: relative; overflow: hidden; }
+    .escena-aula-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 65%, #dbeafe 100%);
+    }
+    .escena-aula-bg svg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.32;
+      animation: respirarAula 9s ease-in-out infinite alternate;
+    }
+    .particula-flotante {
+      position: absolute;
+      font-size: 22px;
+      opacity: 0.25;
+      animation: flotarSuave 6s ease-in-out infinite alternate;
+    }
+    @keyframes respirarAula {
+      0% { transform: scale(1) translateY(0px); }
+      100% { transform: scale(1.06) translateY(-8px); }
+    }
+    @keyframes flotarSuave {
+      0% { transform: translateY(0px) rotate(-4deg); }
+      100% { transform: translateY(-14px) rotate(6deg); }
+    }
+    .login-card, .container { position: relative; z-index: 1; }
     
-    main#vista-login { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(180deg, #eff6ff, #e2e8f0); }
+  
+    main { position: relative; overflow: hidden; background: linear-gradient(180deg, #dbeafe 0%, #eff6ff 50%, #bfdbfe 100%); }
+    .escena-aula-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .escena-aula-bg svg {
+      width: 100%;
+      height: 100%;
+      opacity: 0.78;
+      animation: moverAula 7s ease-in-out infinite alternate;
+    }
+    .mano-saludo {
+      transform-origin: 55px 95px;
+      animation: saludarProfe 2.2s ease-in-out infinite alternate;
+    }
+    .particula-flotante {
+      position: absolute;
+      font-size: 24px;
+      opacity: 0.55;
+      animation: flotarSuave 4.5s ease-in-out infinite alternate;
+    }
+    @keyframes moverAula {
+      0% { transform: scale(1) translateY(0px); }
+      100% { transform: scale(1.04) translateY(-6px); }
+    }
+    @keyframes saludarProfe {
+      0% { transform: rotate(-10deg); }
+      100% { transform: rotate(16deg); }
+    }
+    @keyframes flotarSuave {
+      0% { transform: translateY(0px) rotate(-6deg); }
+      100% { transform: translateY(-12px) rotate(8deg); }
+    }
+    .login-card, .container { position: relative; z-index: 2; }
     
-    /* Franja superior navideña en la tarjeta de login */
-    .login-card { 
-      background: white; 
-      width: 100%; 
-      max-width: 400px; 
-      border-radius: 16px; 
-      border-top: 10px solid transparent;
-      border-image: url('/banner_navidad.jpg') 30 round;
-      padding: 30px; 
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
-      text-align: center; 
+  
+    .foto-colegio-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .foto-colegio-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.55;
+      animation: zoomFondoColegio 12s ease-in-out infinite alternate;
+    }
+    @keyframes zoomFondoColegio {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.08); }
     }
     
-    .login-card img { width: 95px; height: 95px; border-radius: 50%; border: 3px solid #0033CC; padding: 4px; object-fit: contain; margin-bottom: 10px; }
-    .login-card h2 { color: #0033CC; font-size: 21px; }
-    .lema { color: #D32F2F; font-size: 12px; font-weight: 700; margin-bottom: 15px; }
-    .form-group { text-align: left; margin-bottom: 14px; }
-    .form-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-    .form-group input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; }
-    
-    /* Botón de ingresar con el fondo navideño */
-    .btn-primary { 
-      width: 100%; 
-      background: linear-gradient(90deg, rgba(0, 25, 80, 0.75), rgba(0, 40, 120, 0.65)), url('/banner_navidad.jpg');
-      background-size: cover;
-      background-position: center;
-      color: white; 
-      border: none; 
-      padding: 12px; 
-      border-radius: 8px; 
-      font-weight: 700; 
-      cursor: pointer; 
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-    }
-    
-    section#vista-panel { flex: 1; max-width: 1150px; width: 100%; margin: 24px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 1.4fr; gap: 24px; }
-    .card { background: white; border-radius: 12px; padding: 22px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-    .card-blue { border-top: 8px solid transparent; border-image: url('/banner_navidad.jpg') 30 round; }
-    .card-red { border-top: 5px solid #D32F2F; }
-    #reader { width: 100%; border-radius: 8px; overflow: hidden; border: 2px solid #bfdbfe; background: #0f172a; min-height: 220px; margin: 12px 0; }
-    .manual-box { display: flex; gap: 8px; }
-    .manual-box input { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; }
-    .manual-box button { background: #0033CC; color: white; border: none; padding: 0 18px; border-radius: 8px; font-weight: 700; cursor: pointer; }
-    .alerta { margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 600; }
-    .alerta-ok { background: #eff6ff; border: 1px solid #93c5fd; color: #0033CC; }
-    .alerta-tarde { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
-    .alerta-error { background: #fef2f2; border: 1px solid #fca5a5; color: #D32F2F; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
-    th { background: #eff6ff; color: #0033CC; text-align: left; padding: 10px; border-bottom: 2px solid #bfdbfe; }
-    td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
-    footer { background: white; border-top: 1px solid #e2e8f0; text-align: center; font-size: 12px; color: #64748b; padding: 12px; }
   </style>
-
 </head>
 <body>
+  <div id="pantalla-carga-7228" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:999999;background:#002288;display:flex;align-items:center;justify-content:center;transition:opacity 0.6s ease;">
+    <img src="fondo_app.jpg" style="width:100%;height:100%;object-fit:cover;display:block;">
+  </div>
+  
+  <img src="/banner_navidad.jpg" alt="Banner Navideño" class="banner-navidad">
   <header>
-    <div class="header-box">
-      <div class="brand">
-        <div class="logo-circle"><img src="/escudo.png" alt="Escudo" /></div>
-        <div>
-          <h1>I.E. 7228 PERUANO CANADIENSE <span class="lema-tag">ESTUDIO Y DISCIPLINA</span></h1>
-          <p>Intranet Institucional - Control de Asistencia QR - Urb. Pachacámac, V.E.S. - UGEL 01</p>
-        </div>
-      </div>
+    <div class="header-left">
+      <img src="/escudo.png" alt="Escudo">
       <div>
-  <span id="reloj">00:00:00</span>
-  <button id="btn-salir" onclick="cerrarSesion()" class="btn-salir hidden">Cerrar sesión</button>
-</div>
-
+        <div style="font-weight:bold;font-size:15px;">I.E. 7228 PERUANO CANADIENSE</div>
+        <div style="font-size:11px;opacity:0.85;">Pachacámac - UGEL 01</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="reloj" class="reloj-box">--:--:--</div>
+      <button id="btn-salir" class="btn-salir hidden" onclick="cerrarSesion()">Cerrar sesión</button>
     </div>
   </header>
-  <main id="vista-login">
-    <div class="login-card">
-      <img src="/escudo.png" alt="Escudo 7228" />
+
+  <main>
+    <div class="foto-colegio-bg"><img src="peruano_canadiense.jpg" alt="I.E. 7228 Peruano Canadiense"></div>
+    <div id="vista-login" class="login-card">
+      <img src="/escudo.png" alt="Escudo 7228">
       <h2>INTRANET ESCOLAR 7228</h2>
-      <div class="lema">"ESTUDIO Y DISCIPLINA"</div>
-
+      <p>Estudio y Disciplina</p>
       <form onsubmit="iniciarSesion(event)">
-        <div class="form-group">
-          <label>Usuario</label>
-          <input type="text" id="usuario" required placeholder="Ej. MikeSanchez" />
+        <input type="text" id="usuario" placeholder="Usuario" required>
+        <div class="pass-wrapper">
+          <input type="password" id="clave" placeholder="Contraseña" required>
+          <button type="button" id="btn-ojo" class="toggle-eye" onclick="alternarClave()" title="Mostrar/Ocultar contraseña">👁️‍🗨️</button>
         </div>
-
-        <div class="form-group">
-          <label>Contraseña</label>
-          <div style="position:relative; display:flex; align-items:center;">
-            <input type="password" id="clave" required placeholder="••••••••" style="padding-right:42px; width:100%;" />
-            <button type="button"
-              onclick="var x=document.getElementById('clave'); var o=this.querySelector('.ojo-abierto'); var c=this.querySelector('.ojo-cerrado'); if(x.type==='password'){x.type='text'; c.style.display='none'; o.style.display='block';}else{x.type='password'; o.style.display='none'; c.style.display='block';}"
-              style="position:absolute; right:10px; z-index:99; background:none; border:none; cursor:pointer; color:#64748b; display:flex; align-items:center;">
-              <svg class="ojo-cerrado" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                <line x1="1" y1="1" x2="23" y2="23"/>
-              </svg>
-              <svg class="ojo-abierto" style="display:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
         <button type="submit" class="btn-primary">Ingresar al Sistema</button>
-        <p id="error-login" style="color:#D32F2F; font-size:13px; font-weight:bold; margin-top:10px;"></p>
       </form>
+      <div id="error-login" class="error-msg"></div>
+    </div>
 
+    <div id="vista-panel" class="container hidden">
+      <div class="stats">
+        <div class="stat-box"><div>Puntuales</div><div id="cont-puntual" class="stat-num">0</div></div>
+        <div class="stat-box tarde"><div>Tardanzas</div><div id="cont-tardanza" class="stat-num">0</div></div>
+      </div>
 
+      <div class="card">
+        <h3 style="color:#0033CC;margin-bottom:10px;">Escáner QR de Asistencia</h3>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:bold;color:#475569;display:block;margin-bottom:4px;">Turno de Registro:</label>
+          <select id="selector-turno" style="margin:0;padding:10px;font-weight:bold;color:#002288;background:#f8fafc;">
+            <option value="Mañana">Turno Mañana (Ingreso 8:00am | Salida 12:45pm)</option>
+            <option value="Tarde">Turno Tarde (Tardanza 1:05pm-2:30pm | Salida 6:10pm)</option>
+          </select>
+        </div>
+        <div id="reader" style="width:100%;max-width:340px;margin:0 auto;"></div>
+        <div class="manual-row">
+          <input type="text" id="codigo-manual" placeholder="Código manual (ej. ALU-7228-001)">
+          <button type="button" class="btn-primary" onclick="registrarManual()">Registrar</button>
+        </div>
+        <div id="alerta-escaneo" class="alerta hidden"></div>
+      </div>
 
+      <div class="card">
+        <h3 style="color:#0033CC;">Registros Recientes</h3>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Hora</th><th>Código</th><th>Estudiante</th><th>Grado</th><th>Estado</th></tr></thead>
+            <tbody id="tabla-asistencia"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="panel-admin" class="card hidden">
+        <h3 style="color:#0033CC;margin-bottom:10px;">Registrar Nuevo Personal</h3>
+        <form onsubmit="crearUsuario(event)">
+          <input type="text" id="nuevo-nombre" placeholder="Nombre completo" required>
+          <input type="text" id="nuevo-usuario" placeholder="Usuario" required>
+          <input type="password" id="nuevo-clave" placeholder="Contraseña" required>
+          <select id="nuevo-rol">
+            <option value="Auxiliar">Auxiliar</option>
+            <option value="Docente">Docente</option>
+            <option value="Administrador">Administrador</option>
+          </select>
+          <button type="submit" class="btn-primary">Guardar Usuario</button>
+        </form>
+      </div>
     </div>
   </main>
-  <section id="vista-panel" class="hidden">
-    <div class="card card-blue">
-      <h2 style="color:#0033CC;">Lector QR de Puerta</h2>
-      <div id="reader"></div>
-      <div class="manual-box">
-        <input type="text" id="codigo-manual" placeholder="Código (ej. ALU-7228-001)" />
-        <button onclick="registrarManual()">Registrar</button>
-      </div>
-      <div id="alerta-escaneo" class="alerta hidden"></div>
-    </div>
-    <div class="card card-red">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2>Asistencia del Día</h2>
-        <div>
-          <span style="background:#dbeafe; color:#0033CC; padding:4px 10px; border-radius:12px; font-size:12px; font-weight:bold;">Puntuales: <b id="cont-puntual">0</b></span>
-          <span style="background:#fef3c7; color:#92400e; padding:4px 10px; border-radius:12px; font-size:12px; font-weight:bold;">Tardanzas: <b id="cont-tardanza">0</b></span>
-        </div>
-      </div>
-      <table>
-        <thead><tr><th>Hora</th><th>Código</th><th>Alumno</th><th>Grado/Sec.</th><th>Estado</th></tr></thead>
-        <tbody id="tabla-asistencia"></tbody>
-      </table>
-    </div>
-  </section>
-  <div id="panel-admin" class="hidden" style="max-width:1150px; width:100%; margin:0 auto 24px; padding:0 20px;">
-    <div class="card card-blue">
-      <h2 style="color:#0033CC; margin-bottom:10px;">Gestión de Usuarios (Solo Administrador)</h2>
-      <form onsubmit="crearUsuario(event)" style="display:flex; flex-wrap:wrap; gap:10px;">
-        <input type="text" id="nuevo-nombre" required placeholder="Nombre completo" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px; flex:1;" />
-        <input type="text" id="nuevo-user" required placeholder="Usuario (ej. aux_tarde)" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px;" />
-        <input type="password" id="nuevo-pass" required placeholder="Contraseña" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px;" />
-        <select id="nuevo-rol" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
-          <option value="Auxiliar">Auxiliar</option>
-          <option value="Administrador">Administrador</option>
-        </select>
-        <button type="submit" style="background:#0033CC; color:white; border:none; padding:8px 16px; border-radius:6px; font-weight:bold; cursor:pointer;">Crear Usuario</button>
-      </form>
-      <p id="msg-admin" style="font-size:13px; font-weight:bold; margin-top:8px; color:#0033CC;"></p>
-    </div>
-  </div>
-  <footer>I.E. 7228 Peruano Canadiense - Urb. Pachacámac, Villa El Salvador</footer>
+
+  <footer>
+    📍 Ubicación: Av. Víctor Malásquez, Manchay - Pachacámac, Lima, Perú | I.E. 7228 Peruano Canadiense
+  </footer>
+
   <script>
-    var scanner = null, puntuales = 0, tardanzas = 0, ultCod = "", ultT = 0;
-    setInterval(function(){ document.getElementById("reloj").textContent = new Date().toLocaleTimeString("es-PE"); }, 1000);
-        var usuarioActual = "";
-        async function iniciarSesion(e) {
-      e.preventDefault();
-      var u = document.getElementById("usuario").value.trim();
-      var p = document.getElementById("clave").value;
-      var res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuario: u, clave: p })
-      });
-      var data = await res.json();
-      if (!data.ok) {
-        document.getElementById("error-login").textContent = data.mensaje;
-        return;
+    var usuarioActual = "";
+    var puntuales = 0;
+    var tardanzas = 0;
+    var scanner = null;
+    var ultCod = "";
+    var ultT = 0;
+
+    function actualizarReloj() {
+      document.getElementById("reloj").textContent = new Date().toLocaleTimeString("es-PE", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    }
+    actualizarReloj();
+    setTimeout(function() {
+      var sp = document.getElementById("pantalla-carga-7228");
+      if (sp) {
+        sp.style.opacity = "0";
+        setTimeout(function() { sp.remove(); }, 600);
       }
+    }, 2500);
+    setTimeout(function() {
+      var sp = document.getElementById("pantalla-carga-7228");
+      if (sp) {
+        sp.style.opacity = "0";
+        setTimeout(function() { sp.remove(); }, 500);
+      }
+    }, 2200);
+    
+    setInterval(actualizarReloj, 1000);
 
-      document.getElementById("error-login").textContent = "";
-      document.getElementById("vista-login").classList.add("hidden");
-      document.getElementById("vista-panel").classList.remove("hidden");
-      document.getElementById("btn-salir").classList.remove("hidden");
-
-      if (data.rol === "Administrador") {
-        document.getElementById("panel-admin").classList.remove("hidden");
+    function alternarClave() {
+      var inputClave = document.getElementById("clave");
+      var btnOjo = document.getElementById("btn-ojo");
+      if (inputClave.type === "password") {
+        inputClave.type = "text";
+        btnOjo.textContent = "👁️";
       } else {
-        document.getElementById("panel-admin").classList.add("hidden");
-      }
-
-      if (typeof Html5QrcodeScanner !== "undefined") {
-        scanner = new Html5QrcodeScanner(
-          "reader",
-          { fps: 10, qrbox: { width: 220, height: 220 } },
-          false
-        );
-        scanner.render(function(decodedText) {
-          var ahora = Date.now();
-          if (decodedText !== ultCod || (ahora - ultT) > 4000) {
-            ultCod = decodedText;
-            ultT = ahora;
-            procesarAsistencia(decodedText);
-          }
-        }, function(error) {});
+        inputClave.type = "password";
+        btnOjo.textContent = "👁️‍🗨️";
       }
     }
 
-    function cerrarSesion() {
-      if (scanner) {
-        scanner.clear().catch(function() {});
-      }
-      document.getElementById("vista-panel").classList.add("hidden");
-      document.getElementById("panel-admin").classList.add("hidden");
-      document.getElementById("btn-salir").classList.add("hidden");
-      document.getElementById("vista-login").classList.remove("hidden");
-    }
-
-
-    async function crearUsuario(e) {
+    async function iniciarSesion(e) {
       e.preventDefault();
-      var body = {
-        nombre: document.getElementById("nuevo-nombre").value.trim(),
-        usuario: document.getElementById("nuevo-user").value.trim(),
-        clave: document.getElementById("nuevo-pass").value,
-        rol: document.getElementById("nuevo-rol").value
-      };
-      var res = await fetch("/api/usuarios", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(body) });
-      var data = await res.json();
-      document.getElementById("msg-admin").textContent = data.mensaje;
-      if (data.ok) e.target.reset();
-    }
+      var btn = e.target.querySelector("button[type='submit']");
+      var errBox = document.getElementById("error-login");
+      var u = document.getElementById("usuario").value.trim();
+      var p = document.getElementById("clave").value.trim();
 
-    function cerrarSesion() {
-      if (scanner) scanner.clear().catch(function(){});
-      document.getElementById("vista-panel").classList.add("hidden");
-      document.getElementById("vista-login").classList.remove("hidden");
-    }
-    function registrarManual() {
-      var inp = document.getElementById("codigo-manual");
-      if (inp.value.trim()) { procesarAsistencia(inp.value.trim()); inp.value = ""; }
-    }
-        async function procesarAsistencia(cod) {
-      var al = document.getElementById("alerta-escaneo");
-      al.classList.remove("hidden");
-      al.className = "alerta alerta-ok";
-      al.textContent = "Leyendo código: " + cod + "...";
+      btn.disabled = true;
+      btn.textContent = "Conectando...";
+      errBox.textContent = "";
 
       try {
-        var res = await fetch("/api/asistencia", {
+        var res = await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ codigo: cod.trim(), registrado_por: "MikeSanchez" })
+          body: JSON.stringify({ usuario: u, clave: p })
         });
         var data = await res.json();
-
         if (!data.ok) {
-          al.className = "alerta alerta-error";
-          al.textContent = data.mensaje;
+          errBox.textContent = data.mensaje;
           return;
         }
 
-        if (data.estado === "Tardanza") { tardanzas++; } else { puntuales++; }
-        document.getElementById("cont-puntual").textContent = puntuales;
-        document.getElementById("cont-tardanza").textContent = tardanzas;
+        usuarioActual = data.usuario;
+        document.getElementById("vista-login").classList.add("hidden");
+        document.getElementById("vista-panel").classList.remove("hidden");
+        document.getElementById("btn-salir").classList.remove("hidden");
 
-        al.className = data.estado === "Tardanza" ? "alerta alerta-tarde" : "alerta alerta-ok";
-        al.innerHTML = "Registrado: <b>" + data.nombre + "</b> (" + data.estado + ") - " + data.hora;
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+          var LN = window.Capacitor.Plugins.LocalNotifications;
+          await LN.requestPermissions();
+          await LN.createChannel({
+            id: "asistencia_7228",
+            name: "Registro de Asistencia",
+            importance: 5,
+            vibration: true,
+            visibility: 1
+          });
+        }
 
-        var est = data.estado === "Tardanza" ? "background:#fef3c7;color:#92400e;" : "background:#dbeafe;color:#0033CC;";
-        var tr = document.createElement("tr");
-        tr.innerHTML = "<td>" + data.hora + "</td><td><b>" + data.codigo + "</b></td><td>" + data.nombre + "</td><td>" + data.grado + "</td><td><span style='padding:3px 8px;border-radius:10px;font-size:11px;font-weight:bold;" + est + "'>" + data.estado + "</span></td>";
-        document.getElementById("tabla-asistencia").prepend(tr);
+        if (data.rol === "Administrador") {
+          document.getElementById("panel-admin").classList.remove("hidden");
+        } else {
+document.getElementById("panel-admin").classList.add("hidden");
+}
+if (typeof Html5Qrcode !== "undefined") {
+          scanner = new Html5Qrcode("reader");
+          scanner.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 220, height: 220 } },
+            function(decodedText) {
+              var ahora = Date.now();
+              if (decodedText !== ultCod || (ahora - ultT) > 4000) {
+                ultCod = decodedText;
+                ultT = ahora;
+                procesarAsistencia(decodedText);
+              }
+            },
+            function(error) {}
+          ).catch(function(err) {
+            document.getElementById("reader").innerHTML = "<p style='color:#dc2626;font-size:13px;'>No se pudo abrir la cámara trasera: " + err + "</p>";
+          });
+        }
       } catch (err) {
-        al.className = "alerta alerta-error";
-        al.textContent = "Error al conectar con el servidor Python.";
-      }
-    }
+errBox.textContent = "Error de red: " + err.message;
+} finally {
+btn.disabled = false;
+btn.textContent = "Ingresar al Sistema";
+}
+}
+function cerrarSesion() {
+if (scanner) {
+scanner.stop().then(function(){ scanner.clear(); }).catch(function(){});
+scanner = null;
+}
+document.getElementById("reader").innerHTML = "";
+document.getElementById("vista-panel").classList.add("hidden");
+document.getElementById("panel-admin").classList.add("hidden");
+document.getElementById("btn-salir").classList.add("hidden");
+document.getElementById("alerta-escaneo").classList.add("hidden");
+document.getElementById("clave").value = "";
+document.getElementById("clave").type = "password";
+document.getElementById("btn-ojo").textContent = "👁️‍🗨️";
+document.getElementById("vista-login").classList.remove("hidden");
+window.scrollTo(0, 0);
+}
+function registrarManual() {
+var cod = document.getElementById("codigo-manual").value.trim();
+if (cod) {
+procesarAsistencia(cod);
+document.getElementById("codigo-manual").value = "";
+}
+}
+async function procesarAsistencia(cod) {
+var al = document.getElementById("alerta-escaneo");
+var horaPantalla = document.getElementById("reloj").textContent.trim();
+      var turnoSel = document.getElementById("selector-turno") ? document.getElementById("selector-turno").value : "Mañana";
+al.classList.remove("hidden");
+al.className = "alerta alerta-ok";
+al.textContent = "Leyendo código: " + cod + "...";
+try {
+var res = await fetch("/api/asistencia", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({
+codigo: cod.trim(),
+registrado_por: usuarioActual || "MikeSanchez",
+hora_reloj: horaPantalla,
+            turno: turnoSel
+})
+});
+var data = await res.json();
+if (!data.ok) {
+if (navigator.vibrate) navigator.vibrate(400);
+al.className = "alerta alerta-error";
+al.textContent = data.mensaje;
+return;
+}
+if (navigator.vibrate) {
+navigator.vibrate(200);
+}
+var tituloNotif = "Asistencia Registrada (" + data.estado + ")";
+var cuerpoNotif = data.nombre + " - Ingreso: " + data.hora;
+if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+var LocalNotifications = window.Capacitor.Plugins.LocalNotifications;
+await LocalNotifications.schedule({
+notifications: [{
+title: tituloNotif,
+body: cuerpoNotif,
+id: Math.floor(Date.now() / 1000) % 100000,
+channelId: "asistencia_7228",
+schedule: { at: new Date(Date.now() + 100) }
+}]
+});
+}
+if (data.estado === "Tardanza") { tardanzas++; } else { puntuales++; }
+document.getElementById("cont-puntual").textContent = puntuales;
+document.getElementById("cont-tardanza").textContent = tardanzas;
+al.className = data.estado === "Tardanza" ? "alerta alerta-tarde" : "alerta alerta-ok";
+al.innerHTML = "Registrado: " + data.nombre + " (" + data.estado + ") - " + data.hora;
+var est = data.estado === "Tardanza" ? "background:#fef3c7;color:#92400e;" : "background:#dbeafe;color:#0033CC;";
+var tr = document.createElement("tr");
+tr.innerHTML = "" + data.hora + "" + data.codigo + "" + data.nombre + "" + data.grado + "" + data.estado + "";
+document.getElementById("tabla-asistencia").prepend(tr);
+} catch (err) {
+al.className = "alerta alerta-error";
+al.textContent = "Error al conectar: " + err.message;
+}
+}
+async function crearUsuario(e) {
+e.preventDefault();
+var res = await fetch("/api/usuarios", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({
+nombre: document.getElementById("nuevo-nombre").value.trim(),
+usuario: document.getElementById("nuevo-usuario").value.trim(),
+clave: document.getElementById("nuevo-clave").value.trim(),
+rol: document.getElementById("nuevo-rol").value
+})
+});
+var data = await res.json();
+alert(data.mensaje);
+if (data.ok) e.target.reset();
+}
 
-  </script>
+
+
+</script>
 </body>
 </html>
