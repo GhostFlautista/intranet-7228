@@ -112,6 +112,7 @@
           </select>
         </div>
         <div id="reader" style="width:100%;max-width:340px;margin:0 auto;"></div>
+        <div style="text-align:center;margin-top:8px;"><button type="button" onclick="iniciarCamaraQR()" style="background:#f1f5f9;color:#0033CC;border:1px solid #cbd5e1;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer;">🔄 Reactivar Cámara</button></div>
         <div class="manual-row">
           <input type="text" id="codigo-manual" placeholder="Código manual (ej. ALU-7228-001)">
           <button type="button" class="btn-primary" onclick="registrarManual()">Registrar</button>
@@ -191,7 +192,7 @@
 </div>
 <script>
 var API_URL = "";
-var VERSION_APP_LOCAL = localStorage.getItem("version_intranet_7228") || "1.8";
+var VERSION_APP_LOCAL = localStorage.getItem("version_intranet_7228") || "2.5";
 var usuarioActual = "";
 var puntuales = 0;
 var tardanzas = 0;
@@ -201,148 +202,238 @@ var ultT = 0;
 var wakeLock = null;
 var timerPadre = null;
 var ultimoIdNotificado = null;
-var badgeVer = document.getElementById("etiqueta-version");
-if (badgeVer) badgeVer.textContent = "v" + VERSION_APP_LOCAL;
-setTimeout(function() {
-var sp = document.getElementById("pantalla-carga-7228");
-if (sp) {
-sp.style.opacity = "0";
-setTimeout(function() { if (sp) sp.remove(); }, 500);
-}
-}, 2000);
-function actualizarReloj() {
-var ahora = new Date();
-var h = String(ahora.getHours()).padStart(2, "0");
-var m = String(ahora.getMinutes()).padStart(2, "0");
-var s = String(ahora.getSeconds()).padStart(2, "0");
-var el = document.getElementById("reloj");
-if (el) el.textContent = h + ":" + m + ":" + s;
-}
-actualizarReloj();
-setInterval(actualizarReloj, 1000);
-var versionVerificada = false;
-async function comprobarActualizacion() {
-if (versionVerificada) return;
-try {
-var res = await fetch(API_URL + "/api/version?t=" + Date.now());
-var info = await res.json();
-if (info && info.version) {
-versionVerificada = true;
-if (info.version !== VERSION_APP_LOCAL) {
-document.getElementById("texto-actualizacion").textContent = info.mensaje || ("Nueva versión " + info.version + " disponible.");
-var btnDesc = document.getElementById("btn-descargar-update");
-if (btnDesc) {
-btnDesc.onclick = function() {
-btnDesc.disabled = true;
-btnDesc.textContent = "Actualizando...";
-var btnCerrar = document.getElementById("btn-cerrar-update");
-if (btnCerrar) btnCerrar.style.display = "none";
-document.getElementById("contenedor-progreso-ota").classList.remove("hidden");
-var pct = 1;
-var intervalo = setInterval(function() {
-pct += Math.floor(Math.random() * 15) + 10;
-if (pct >= 100) {
-pct = 100;
-clearInterval(intervalo);
-document.getElementById("barra-azul-ota").style.width = "100%";
-document.getElementById("porcentaje-ota").textContent = "100%";
-setTimeout(function() {
-localStorage.setItem("version_intranet_7228", info.version); localStorage.setItem("parche_ota_7228", JSON.stringify(info));
-window.location.reload();
-}, 300);
-} else {
-document.getElementById("barra-azul-ota").style.width = pct + "%";
-document.getElementById("porcentaje-ota").textContent = pct + "%";
-}
-}, 130);
-};
-}
-if (info.obligatoria) {
-var btnCerrar2 = document.getElementById("btn-cerrar-update");
-if (btnCerrar2) btnCerrar2.style.display = "none";
-}
-document.getElementById("modal-actualizacion").classList.remove("hidden");
-}
-}
-} catch (e) {
-setTimeout(comprobarActualizacion, 5000);
-}
-}
-setTimeout(comprobarActualizacion, 2500);
-function alternarClave() {
-var inputClave = document.getElementById("clave");
-var btnOjo = document.getElementById("btn-ojo");
-if (inputClave.type === "password") {
-inputClave.type = "text";
-btnOjo.textContent = "👁️";
-} else {
-inputClave.type = "password";
-btnOjo.textContent = "👁️‍🗨️";
-}
-}
-async function mantenerPantallaActiva() {
-try {
-if ("wakeLock" in navigator) {
-wakeLock = await navigator.wakeLock.request("screen");
-}
-} catch (e) {}
-}
-async function prepararNotificaciones() {
-if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
-var LN = window.Capacitor.Plugins.LocalNotifications;
-await LN.requestPermissions();
-await LN.createChannel({
-id: "asistencia_7228",
-name: "Registro de Asistencia",
-importance: 5,
-vibration: true,
-visibility: 1
-});
-}
-}
-async function dispararNotificacion(titulo, cuerpo) {
-if (navigator.vibrate) navigator.vibrate(250);
-if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
-var LN = window.Capacitor.Plugins.LocalNotifications;
-await LN.schedule({
-notifications: [{
-title: titulo,
-body: cuerpo,
-id: Math.floor(Date.now() / 1000) % 100000,
-channelId: "asistencia_7228",
-schedule: { at: new Date(Date.now() + 100) }
-}]
-});
-}
-}
-async function consultarAsistenciaHijo(usuarioPadre, esPrimeraCarga) {
-try {
-var res = await fetch(API_URL + "/api/padre/asistencias/" + encodeURIComponent(usuarioPadre));
-var data = await res.json();
-if (!data.ok) return;
-var tbody = document.getElementById("tabla-padre");
-tbody.innerHTML = "";
-data.registros.forEach(function(r) {
-var tr = document.createElement("tr");
-var badge = r.estado.indexOf("Tardanza") !== -1 ? "background:#fef3c7;color:#92400e;" : "background:#dbeafe;color:#0033CC;";
-tr.innerHTML = "<td>" + r.fecha + "</td>" +
-"<td><b>" + r.hora + "</b></td>" +
-"<td>" + r.nombre + "</td>" +
-"<td>" + r.grado + "</td>" +
-"<td><span style='padding:3px 8px;border-radius:10px;font-size:11px;font-weight:bold;" + badge + "'>" + r.estado + "</span></td>";
-tbody.appendChild(tr);
-});
-if (data.registros.length > 0) {
-var masReciente = data.registros.at(0);
-if (esPrimeraCarga) {
-ultimoIdNotificado = masReciente.id;
-} else if (ultimoIdNotificado !== null && masReciente.id > ultimoIdNotificado) {
-ultimoIdNotificado = masReciente.id;
-await dispararNotificacion(
-"Ingreso al Colegio - I.E. 7228",
-masReciente.nombre + " pasó el escáner QR a las " + masReciente.hora + " (" + masReciente.estado + ")"
-);
-}
+    var camaraIniciando = false;
+
+    var badgeVer = document.getElementById("etiqueta-version");
+    if (badgeVer) badgeVer.textContent = "v" + VERSION_APP_LOCAL;
+
+    setTimeout(function() {
+      var sp = document.getElementById("pantalla-carga-7228");
+      if (sp) {
+        sp.style.opacity = "0";
+        setTimeout(function() { if (sp) sp.remove(); }, 500);
+      }
+    }, 2000);
+
+    function actualizarReloj() {
+      var ahora = new Date();
+      var h = String(ahora.getHours()).padStart(2, "0");
+      var m = String(ahora.getMinutes()).padStart(2, "0");
+      var s = String(ahora.getSeconds()).padStart(2, "0");
+      var el = document.getElementById("reloj");
+      if (el) el.textContent = h + ":" + m + ":" + s;
+    }
+    actualizarReloj();
+    setInterval(actualizarReloj, 1000);
+
+    var versionVerificada = false;
+    async function comprobarActualizacion() {
+      if (versionVerificada) return;
+      try {
+        var res = await fetch(API_URL + "/api/version?t=" + Date.now());
+        var info = await res.json();
+        if (info && info.version) {
+          versionVerificada = true;
+          if (info.version !== VERSION_APP_LOCAL) {
+            document.getElementById("texto-actualizacion").textContent = info.mensaje || ("Nueva versión " + info.version + " disponible.");
+            var btnDesc = document.getElementById("btn-descargar-update");
+            if (btnDesc) {
+              btnDesc.onclick = function() {
+                btnDesc.disabled = true;
+                btnDesc.textContent = "Actualizando...";
+                var btnCerrar = document.getElementById("btn-cerrar-update");
+                if (btnCerrar) btnCerrar.style.display = "none";
+                document.getElementById("contenedor-progreso-ota").classList.remove("hidden");
+
+                var pct = 1;
+                var intervalo = setInterval(function() {
+                  pct += Math.floor(Math.random() * 15) + 10;
+                  if (pct >= 100) {
+                    pct = 100;
+                    clearInterval(intervalo);
+                    document.getElementById("barra-azul-ota").style.width = "100%";
+                    document.getElementById("porcentaje-ota").textContent = "100%";
+                    setTimeout(function() {
+                      localStorage.setItem("version_intranet_7228", info.version);
+                      window.location.reload();
+                    }, 300);
+                  } else {
+                    document.getElementById("barra-azul-ota").style.width = pct + "%";
+                    document.getElementById("porcentaje-ota").textContent = pct + "%";
+                  }
+                }, 130);
+              };
+            }
+            document.getElementById("modal-actualizacion").classList.remove("hidden");
+          }
+        }
+      } catch (e) {
+        setTimeout(comprobarActualizacion, 5000);
+      }
+    }
+    setTimeout(comprobarActualizacion, 2500);
+
+    function alternarClave() {
+      var inputClave = document.getElementById("clave");
+      var btnOjo = document.getElementById("btn-ojo");
+      if (inputClave.type === "password") {
+        inputClave.type = "text";
+        btnOjo.textContent = "👁️";
+      } else {
+        inputClave.type = "password";
+        btnOjo.textContent = "👁️‍🗨️";
+      }
+    }
+
+    async function mantenerPantallaActiva() {
+      try {
+        if ("wakeLock" in navigator) {
+          wakeLock = await navigator.wakeLock.request("screen");
+        }
+      } catch (e) {}
+    }
+
+    async function prepararNotificaciones() {
+      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+        var LN = window.Capacitor.Plugins.LocalNotifications;
+        await LN.requestPermissions();
+        await LN.createChannel({
+          id: "asistencia_7228",
+          name: "Registro de Asistencia",
+          importance: 5,
+          vibration: true,
+          visibility: 1
+        });
+      }
+    }
+
+    async function dispararNotificacion(titulo, cuerpo) {
+      if (navigator.vibrate) navigator.vibrate(250);
+      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+        var LN = window.Capacitor.Plugins.LocalNotifications;
+        await LN.schedule({
+          notifications: [{
+            title: titulo,
+            body: cuerpo,
+            id: Math.floor(Date.now() / 1000) % 100000,
+            channelId: "asistencia_7228",
+            schedule: { at: new Date(Date.now() + 100) }
+          }]
+        });
+      }
+    }
+
+    function apagarHardwareCamara() {
+      try {
+        var videos = document.querySelectorAll("#reader video");
+        videos.forEach(function(v) {
+          if (v.srcObject) {
+            v.srcObject.getTracks().forEach(function(t) { t.stop(); });
+            v.srcObject = null;
+          }
+        });
+      } catch (e) {}
+      if (scanner) {
+        try { scanner.stop().catch(function(){}); } catch (e) {}
+        try { scanner.clear(); } catch (e) {}
+        scanner = null;
+      }
+      var rEl = document.getElementById("reader");
+      if (rEl) rEl.innerHTML = "";
+    }
+
+    async function iniciarCamaraQR() {
+      if (camaraIniciando) return;
+      var vistaPanel = document.getElementById("vista-panel");
+      if (!vistaPanel || vistaPanel.classList.contains("hidden")) return;
+
+      var rEl = document.getElementById("reader");
+      if (typeof Html5Qrcode === "undefined") {
+        if (rEl) rEl.innerHTML = "<p style='color:#dc2626;font-size:13px;'>Librería QR no cargada.</p>";
+        return;
+      }
+
+      camaraIniciando = true;
+      try {
+        apagarHardwareCamara();
+        if (rEl) rEl.innerHTML = "<p style='color:#0033CC;font-size:13px;text-align:center;padding:12px;'>Iniciando cámara trasera...</p>";
+        await new Promise(function(r) { setTimeout(r, 300); });
+        if (rEl) rEl.innerHTML = "";
+
+        scanner = new Html5Qrcode("reader");
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 12, qrbox: { width: 220, height: 220 } },
+          function(decodedText) {
+            var ahora = Date.now();
+            if (decodedText !== ultCod || (ahora - ultT) > 2500) {
+              ultCod = decodedText;
+              ultT = ahora;
+              procesarAsistencia(decodedText);
+            }
+          },
+          function(error) {}
+        );
+      } catch (err) {
+        if (rEl) rEl.innerHTML = "<p style='color:#dc2626;font-size:13px;'>Aviso cámara: " + err + "</p>";
+      } finally {
+        camaraIniciando = false;
+      }
+    }
+
+    document.addEventListener("visibilitychange", function() {
+      if (!document.hidden) {
+        var vistaPanel = document.getElementById("vista-panel");
+        if (vistaPanel && !vistaPanel.classList.contains("hidden")) {
+          mantenerPantallaActiva();
+          var vid = document.querySelector("#reader video");
+          if (!vid || vid.paused || vid.readyState === 0) {
+            iniciarCamaraQR();
+          }
+        }
+      }
+    });
+
+    setInterval(function() {
+      var vistaPanel = document.getElementById("vista-panel");
+      if (vistaPanel && !vistaPanel.classList.contains("hidden") && !document.hidden) {
+        var vid = document.querySelector("#reader video");
+        if (!vid || vid.paused || vid.readyState === 0) {
+          iniciarCamaraQR();
+        }
+      }
+    }, 2500);
+
+    async function consultarAsistenciaHijo(usuarioPadre, esPrimeraCarga) {
+      try {
+        var res = await fetch(API_URL + "/api/padre/asistencias/" + encodeURIComponent(usuarioPadre));
+        var data = await res.json();
+        if (!data.ok) return;
+
+        var tbody = document.getElementById("tabla-padre");
+        tbody.innerHTML = "";
+        data.registros.forEach(function(r) {
+          var tr = document.createElement("tr");
+          var badge = r.estado.indexOf("Tardanza") !== -1 ? "background:#fef3c7;color:#92400e;" : "background:#dbeafe;color:#0033CC;";
+          tr.innerHTML = "<td>" + r.fecha + "</td>" +
+                         "<td><b>" + r.hora + "</b></td>" +
+                         "<td>" + r.nombre + "</td>" +
+                         "<td>" + r.grado + "</td>" +
+                         "<td><span style='padding:3px 8px;border-radius:10px;font-size:11px;font-weight:bold;" + badge + "'>" + r.estado + "</span></td>";
+          tbody.appendChild(tr);
+        });
+
+        if (data.registros.length > 0) {
+          var masReciente = data.registros.at(0);
+          if (esPrimeraCarga) {
+            ultimoIdNotificado = masReciente.id;
+          } else if (ultimoIdNotificado !== null && masReciente.id > ultimoIdNotificado) {
+            ultimoIdNotificado = masReciente.id;
+            await dispararNotificacion(
+              "Ingreso al Colegio - I.E. 7228",
+              masReciente.nombre + " pasó el escáner QR a las " + masReciente.hora + " (" + masReciente.estado + ")"
+            );
+          }
 } else if (esPrimeraCarga) {
 ultimoIdNotificado = 0;
 }
@@ -374,8 +465,7 @@ document.getElementById("panel-admin").classList.remove("hidden");
 document.getElementById("panel-admin").classList.add("hidden");
 }
 await iniciarCamaraQR();
-}
-window.addEventListener("DOMContentLoaded", function() {
+}window.addEventListener("DOMContentLoaded", function() {
 var sesionGuardada = localStorage.getItem("intranet_7228_sesion");
 if (sesionGuardada) {
 try {
@@ -424,10 +514,7 @@ function cerrarSesion() {
 localStorage.removeItem("intranet_7228_sesion");
 if (timerPadre) { clearInterval(timerPadre); timerPadre = null; }
 if (wakeLock) { wakeLock.release().catch(function(){}); wakeLock = null; }
-if (scanner) {
-scanner.stop().then(function(){ scanner.clear(); }).catch(function(){});
-scanner = null;
-}
+apagarHardwareCamara();
 document.getElementById("reader").innerHTML = "";
 document.getElementById("vista-panel").classList.add("hidden");
 document.getElementById("vista-padre").classList.add("hidden");
