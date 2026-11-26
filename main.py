@@ -139,13 +139,13 @@ def login(datos: LoginReq):
     user = c.fetchone()
     conn.close()
     if not user:
-        return {"ok": False, "mensaje": "Nueva versión 3.0 disponible: Pantalla de inicio actualizada y menú inferior completo."}
+        return {"ok": False, "mensaje": "Nueva versión 3.2 disponible: Nueva imagen de inicio, barra de menú inferior y sección Mi Perfil."}
     return {"ok": True, "usuario": datos.usuario, "nombre": user[0], "rol": user[1]}
 
 @app.post("/api/usuarios")
 def crear_usuario(datos: NuevoUsuarioReq):
     if datos.solicitante != "MikeSanchez":
-        return {"ok": False, "mensaje": "Nueva versión 3.0 disponible: Pantalla de inicio actualizada y menú inferior completo."}
+        return {"ok": False, "mensaje": "Nueva versión 3.2 disponible: Nueva imagen de inicio, barra de menú inferior y sección Mi Perfil."}
     conn = sqlite3.connect("asistencia_7228.db")
     c = conn.cursor()
     try:
@@ -157,7 +157,7 @@ def crear_usuario(datos: NuevoUsuarioReq):
         conn.commit()
         return {"ok": True, "mensaje": f"Usuario {datos.usuario} ({datos.rol}) creado correctamente"}
     except sqlite3.IntegrityError:
-        return {"ok": False, "mensaje": "Nueva versión 3.0 disponible: Pantalla de inicio actualizada y menú inferior completo."}
+        return {"ok": False, "mensaje": "Nueva versión 3.2 disponible: Nueva imagen de inicio, barra de menú inferior y sección Mi Perfil."}
     finally:
         conn.close()
 
@@ -232,10 +232,10 @@ def obtener_asistencias_padre(usuario_padre: str):
 @app.get("/api/version")
 def verificar_version():
     return {
-        "version": "3.1",
+        "version": "3.2",
         "obligatoria": False,
-        "mensaje": "Nueva versión 3.0 disponible: Pantalla de inicio actualizada y menú inferior completo.",
-        "url_apk": "https://github.com/GhostFlautista/intranet-7228/releases/download/v3.1/app-debug.apk"
+        "mensaje": "Nueva versión 3.2 disponible: Nueva imagen de inicio, barra de menú inferior y sección Mi Perfil.",
+        "url_apk": "https://github.com/GhostFlautista/intranet-7228/releases/download/v3.2/app-debug.apk"
     }
 class PerfilModel(BaseModel):
     usuario: str
