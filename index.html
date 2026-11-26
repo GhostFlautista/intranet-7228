@@ -3,34 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Intranet 7228 - Control de Asistencia</title>
+  <title>AsistenciaPeruanoCanadiense - I.E. 7228</title>
   <script src="html5-qrcode.min.js"></script>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
     body { background: #f0f4f8; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
     .hidden { display: none !important; }
-    .banner-navidad { width: 100%; max-height: 150px; object-fit: cover; display: block; border-bottom: 3px solid #dc2626; }
-    header { background: linear-gradient(rgba(0, 20, 75, 0.58), rgba(0, 20, 75, 0.68)), url('/banner_navidad.jpg') center/cover no-repeat; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 3px 12px rgba(0,0,0,0.28); border-bottom: 3px solid #dc2626; }
-    .header-left { display: flex; align-items: center; gap: 12px; }
-    .header-left img { width: 45px; height: 45px; border-radius: 50%; background: white; padding: 2px; }
-    .reloj-box { background: #facc15; color: #002288; font-weight: bold; padding: 6px 14px; border-radius: 20px; font-size: 16px; }
-    .btn-salir { background: #dc2626; color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    main { flex: 1; }
-    .login-card { max-width: 380px; margin: 35px auto; background: rgba(255, 255, 255, 0.84); backdrop-filter: blur(4px); padding: 28px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
-    .login-card img { width: 85px; margin-bottom: 10px; }
-    .login-card h2 { color: #0033CC; margin-bottom: 5px; font-size: 20px; }
-    .login-card p { color: #64748b; font-size: 13px; margin-bottom: 20px; }
-    input, select { width: 100%; padding: 12px; margin: 8px 0 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; }
-    .pass-wrapper { position: relative; margin: 8px 0 15px; }
+    header {
+      background: linear-gradient(rgba(0, 20, 75, 0.55), rgba(0, 20, 75, 0.68)), url('banner_navidad.jpg') center/cover no-repeat;
+      color: white; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.28); border-bottom: 3px solid #dc2626;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-left img { width: 44px; height: 44px; border-radius: 50%; background: white; padding: 2px; }
+    .reloj-box { background: #facc15; color: #002288; font-weight: bold; padding: 6px 12px; border-radius: 20px; font-size: 15px; }
+    .btn-salir { background: #dc2626; color: white; border: none; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
+    main { flex: 1; position: relative; overflow: hidden; }
+    .foto-colegio-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .foto-colegio-bg img { width: 100%; height: 100%; object-fit: cover; opacity: 0.55; animation: zoomBg 12s ease-in-out infinite alternate; }
+    @keyframes zoomBg { 0% { transform: scale(1); } 100% { transform: scale(1.07); } }
+    .login-card, .container { position: relative; z-index: 2; }
+    .login-card { max-width: 380px; margin: 32px auto; background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(4px); padding: 26px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); text-align: center; }
+    .login-card img { width: 82px; margin-bottom: 8px; }
+    .login-card h2 { color: #0033CC; margin-bottom: 4px; font-size: 20px; }
+    .login-card p { color: #475569; font-size: 13px; margin-bottom: 18px; }
+    input, select { width: 100%; padding: 12px; margin: 8px 0 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white; }
+    .pass-wrapper { position: relative; margin: 8px 0 14px; }
     .pass-wrapper input { margin: 0; padding-right: 44px; }
-    .toggle-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px; color: #475569; padding: 4px; }
+    .toggle-eye { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px; }
     .btn-primary { width: 100%; background: #0033CC; color: white; border: none; padding: 13px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
     .btn-primary:disabled { background: #94a3b8; }
-    .error-msg { color: #dc2626; font-size: 13px; margin-top: 10px; font-weight: 500; }
-    .container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
-    .card { background: white; padding: 20px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); margin-bottom: 20px; }
-    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-    .stat-box { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-bottom: 4px solid #0033CC; }
+    .error-msg { color: #dc2626; font-size: 13px; margin-top: 10px; font-weight: 600; }
+    .container { max-width: 900px; margin: 18px auto; padding: 0 14px; }
+    .card { background: rgba(255,255,255,0.95); padding: 18px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 18px; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+    .stat-box { background: white; padding: 14px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.06); border-bottom: 4px solid #0033CC; }
     .stat-box.tarde { border-bottom-color: #d97706; }
     .stat-num { font-size: 26px; font-weight: bold; color: #0033CC; }
     .stat-box.tarde .stat-num { color: #d97706; }
@@ -44,132 +51,45 @@
     .manual-row { display: flex; gap: 8px; margin-top: 12px; }
     .manual-row input { margin: 0; }
     .manual-row button { width: auto; padding: 0 18px; }
-    footer { background: #002288; color: #e2e8f0; text-align: center; padding: 14px 10px; font-size: 12px; margin-top: 30px; }
-  
-    main { position: relative; overflow: hidden; }
-    .escena-aula-bg {
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      overflow: hidden;
-      background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 65%, #dbeafe 100%);
-    }
-    .escena-aula-bg svg {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0.32;
-      animation: respirarAula 9s ease-in-out infinite alternate;
-    }
-    .particula-flotante {
-      position: absolute;
-      font-size: 22px;
-      opacity: 0.25;
-      animation: flotarSuave 6s ease-in-out infinite alternate;
-    }
-    @keyframes respirarAula {
-      0% { transform: scale(1) translateY(0px); }
-      100% { transform: scale(1.06) translateY(-8px); }
-    }
-    @keyframes flotarSuave {
-      0% { transform: translateY(0px) rotate(-4deg); }
-      100% { transform: translateY(-14px) rotate(6deg); }
-    }
-    .login-card, .container { position: relative; z-index: 1; }
-    
-  
-    main { position: relative; overflow: hidden; background: linear-gradient(180deg, #dbeafe 0%, #eff6ff 50%, #bfdbfe 100%); }
-    .escena-aula-bg {
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-    .escena-aula-bg svg {
-      width: 100%;
-      height: 100%;
-      opacity: 0.78;
-      animation: moverAula 7s ease-in-out infinite alternate;
-    }
-    .mano-saludo {
-      transform-origin: 55px 95px;
-      animation: saludarProfe 2.2s ease-in-out infinite alternate;
-    }
-    .particula-flotante {
-      position: absolute;
-      font-size: 24px;
-      opacity: 0.55;
-      animation: flotarSuave 4.5s ease-in-out infinite alternate;
-    }
-    @keyframes moverAula {
-      0% { transform: scale(1) translateY(0px); }
-      100% { transform: scale(1.04) translateY(-6px); }
-    }
-    @keyframes saludarProfe {
-      0% { transform: rotate(-10deg); }
-      100% { transform: rotate(16deg); }
-    }
-    @keyframes flotarSuave {
-      0% { transform: translateY(0px) rotate(-6deg); }
-      100% { transform: translateY(-12px) rotate(8deg); }
-    }
-    .login-card, .container { position: relative; z-index: 2; }
-    
-  
-    .foto-colegio-bg {
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-    .foto-colegio-bg img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0.55;
-      animation: zoomFondoColegio 12s ease-in-out infinite alternate;
-    }
-    @keyframes zoomFondoColegio {
-      0% { transform: scale(1); }
-      100% { transform: scale(1.08); }
-    }
-    
+    footer { background: #002288; color: #e2e8f0; text-align: center; padding: 14px 10px; font-size: 12px; position: relative; z-index: 2; }
   </style>
 </head>
 <body>
-  <div id="pantalla-carga-7228" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:999999;background:#002288;display:flex;align-items:center;justify-content:center;transition:opacity 0.6s ease;">
+  <div id="pantalla-carga-7228" style="position:fixed;inset:0;z-index:999999;background:#002288;display:flex;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
     <img src="fondo_app.jpg" style="width:100%;height:100%;object-fit:cover;display:block;">
   </div>
-  
+
   <header>
     <div class="header-left">
-      <img src="/escudo.png" alt="Escudo">
+      <img src="escudo.png" alt="Escudo">
       <div>
-        <div style="font-weight:bold;font-size:15px;">I.E. 7228 PERUANO CANADIENSE</div>
-        <div style="font-size:11px;opacity:0.85;">Pachacámac - UGEL 01</div>
+        <div style="font-weight:bold;font-size:14px;">I.E. 7228 PERUANO CANADIENSE</div>
+        <div style="font-size:11px;opacity:0.9;">Pachacámac - UGEL 01</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;">
+    <div style="display:flex;align-items:center;gap:8px;">
       <div id="reloj" class="reloj-box">--:--:--</div>
       <button id="btn-salir" class="btn-salir hidden" onclick="cerrarSesion()">Cerrar sesión</button>
     </div>
   </header>
 
   <main>
-    <div class="foto-colegio-bg"><img src="peruano_canadiense.jpg" alt="I.E. 7228 Peruano Canadiense"></div>
+    <div class="foto-colegio-bg"><img src="peruano_canadiense.jpg" alt="I.E. 7228"></div>
+
     <div id="vista-login" class="login-card">
-      <img src="/escudo.png" alt="Escudo 7228">
+      <img src="escudo.png" alt="Escudo 7228">
       <h2>INTRANET ESCOLAR 7228</h2>
       <p>Estudio y Disciplina</p>
       <form onsubmit="iniciarSesion(event)">
         <input type="text" id="usuario" placeholder="Usuario" required>
         <div class="pass-wrapper">
           <input type="password" id="clave" placeholder="Contraseña" required>
-          <button type="button" id="btn-ojo" class="toggle-eye" onclick="alternarClave()" title="Mostrar/Ocultar contraseña">👁️‍🗨️</button>
+          <button type="button" id="btn-ojo" class="toggle-eye" onclick="alternarClave()">👁️‍🗨️</button>
         </div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#334155;margin:4px 0 14px;cursor:pointer;">
+          <input type="checkbox" id="recordar-sesion" checked style="width:16px;height:16px;margin:0;">
+          Mantener sesión iniciada (Recordar)
+        </label>
         <button type="submit" class="btn-primary">Ingresar al Sistema</button>
       </form>
       <div id="error-login" class="error-msg"></div>
@@ -200,6 +120,14 @@
 
       <div class="card">
         <h3 style="color:#0033CC;">Registros Recientes</h3>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin:10px 0;">
+          <div style="font-size:12px;font-weight:bold;color:#002288;margin-bottom:8px;">📊 Exportar Reporte en Excel (Orden Alfabético y Filtros)</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+            <input type="date" id="filtro-excel-fecha" style="flex:1;min-width:130px;margin:0;padding:8px;font-size:13px;" title="Filtrar por día">
+            <input type="text" id="filtro-excel-grado" placeholder="Grado (opcional, ej. 3° A)" style="flex:1;min-width:140px;margin:0;padding:8px;font-size:13px;">
+            <button type="button" onclick="descargarExcelAsistencia()" style="background:#15803d;color:white;border:none;padding:9px 14px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;">Descargar Excel (.xlsx)</button>
+          </div>
+        </div>
         <div style="overflow-x:auto;">
           <table>
             <thead><tr><th>Hora</th><th>Código</th><th>Estudiante</th><th>Grado</th><th>Estado</th></tr></thead>
@@ -209,7 +137,7 @@
       </div>
 
       <div id="panel-admin" class="card hidden">
-        <h3 style="color:#0033CC;margin-bottom:10px;">Registrar Nuevo Personal</h3>
+        <h3 style="color:#0033CC;margin-bottom:10px;">Registrar Nuevo Personal / Apoderado</h3>
         <form onsubmit="crearUsuario(event)">
           <input type="text" id="nuevo-nombre" placeholder="Nombre completo" required>
           <input type="text" id="nuevo-usuario" placeholder="Usuario" required>
@@ -218,270 +146,274 @@
             <option value="Auxiliar">Auxiliar</option>
             <option value="Docente">Docente</option>
             <option value="Administrador">Administrador</option>
+            <option value="Padre">Padre de Familia</option>
           </select>
+          <input type="text" id="nuevo-codigo-hijo" placeholder="Si es Padre: Código QR del hijo (ej. ALU-7228-001)">
           <button type="submit" class="btn-primary">Guardar Usuario</button>
         </form>
       </div>
     </div>
-  </main>
 
-  <footer>
-    📍 Ubicación: Av. Víctor Malásquez, Manchay - Pachacámac, Lima, Perú | I.E. 7228 Peruano Canadiense
-  </footer>
-
-  <script>
-    var API_URL = "";
-    var VERSION_APP_LOCAL = localStorage.getItem("version_intranet_7228") || "1.2";
-    var usuarioActual = "";
-    var puntuales = 0;
-    var tardanzas = 0;
-    var scanner = null;
-    var ultCod = "";
-    var ultT = 0;
-    var wakeLock = null;
-    var timerPadre = null;
-    var ultimoIdNotificado = null;
-
-    setTimeout(function() {
-      var sp = document.getElementById("pantalla-carga-7228");
-      if (sp) {
-        sp.style.opacity = "0";
-        setTimeout(function() { if (sp) sp.remove(); }, 500);
-      }
-    }, 2000);
-
-    function actualizarReloj() {
-      var ahora = new Date();
-      var h = String(ahora.getHours()).padStart(2, "0");
-      var m = String(ahora.getMinutes()).padStart(2, "0");
-      var s = String(ahora.getSeconds()).padStart(2, "0");
-      var el = document.getElementById("reloj");
-      if (el) el.textContent = h + ":" + m + ":" + s;
-    }
-    actualizarReloj();
-    setInterval(actualizarReloj, 1000);
-
-    var versionVerificada = false;
-    async function comprobarActualizacion() {
-      if (versionVerificada) return;
-      try {
-        var res = await fetch(API_URL + "/api/version?t=" + Date.now());
-        var info = await res.json();
-        if (info && info.version) {
-          versionVerificada = true;
-          if (info.version !== VERSION_APP_LOCAL) {
-            document.getElementById("texto-actualizacion").textContent = info.mensaje || ("Nueva versión " + info.version + " disponible.");
-            var btnDesc = document.getElementById("btn-descargar-update");
-            if (btnDesc) { btnDesc.removeAttribute("href"); btnDesc.onclick = function() { localStorage.setItem("version_intranet_7228", info.version); window.location.reload(); }; }
-            if (info.obligatoria) {
-              var btnCerrar = document.getElementById("btn-cerrar-update");
-              if (btnCerrar) btnCerrar.style.display = "none";
-            }
-            document.getElementById("modal-actualizacion").classList.remove("hidden");
-          }
-        }
-      } catch (e) {
-        setTimeout(comprobarActualizacion, 5000);
-      }
-    }
-    setTimeout(comprobarActualizacion, 2500);
-
-    function alternarClave() {
-      var inputClave = document.getElementById("clave");
-      var btnOjo = document.getElementById("btn-ojo");
-      if (inputClave.type === "password") {
-        inputClave.type = "text";
-        btnOjo.textContent = "👁️";
-      } else {
-        inputClave.type = "password";
-        btnOjo.textContent = "👁️‍🗨️";
-      }
-    }
-
-    async function mantenerPantallaActiva() {
-      try {
-        if ("wakeLock" in navigator) {
-          wakeLock = await navigator.wakeLock.request("screen");
-        }
-      } catch (e) {}
-    }
-
-    async function prepararNotificaciones() {
-      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
-        var LN = window.Capacitor.Plugins.LocalNotifications;
-        await LN.requestPermissions();
-        await LN.createChannel({
-          id: "asistencia_7228",
-          name: "Registro de Asistencia",
-          importance: 5,
-          vibration: true,
-          visibility: 1
-        });
-      }
-    }
-
-    async function dispararNotificacion(titulo, cuerpo) {
-      if (navigator.vibrate) navigator.vibrate(250);
-      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
-        var LN = window.Capacitor.Plugins.LocalNotifications;
-        await LN.schedule({
-          notifications: [{
-            title: titulo,
-            body: cuerpo,
-            id: Math.floor(Date.now() / 1000) % 100000,
-            channelId: "asistencia_7228",
-            schedule: { at: new Date(Date.now() + 100) }
-          }]
-        });
-      }
-    }
-
-    async function consultarAsistenciaHijo(usuarioPadre, esPrimeraCarga) {
-      try {
-        var res = await fetch(API_URL + "/api/padre/asistencias/" + encodeURIComponent(usuarioPadre));
-        var data = await res.json();
-        if (!data.ok) return;
-
-        var tbody = document.getElementById("tabla-padre");
-        tbody.innerHTML = "";
-        data.registros.forEach(function(r) {
-          var tr = document.createElement("tr");
-          var badge = r.estado.indexOf("Tardanza") !== -1 ? "background:#fef3c7;color:#92400e;" : "background:#dbeafe;color:#0033CC;";
-          tr.innerHTML = "<td>" + r.fecha + "</td>" +
-                         "<td><b>" + r.hora + "</b></td>" +
-                         "<td>" + r.nombre + "</td>" +
-                         "<td>" + r.grado + "</td>" +
-                         "<td><span style='padding:3px 8px;border-radius:10px;font-size:11px;font-weight:bold;" + badge + "'>" + r.estado + "</span></td>";
-          tbody.appendChild(tr);
-        });
-
-        if (data.registros.length > 0) {
-          var masReciente = data.registros.at(0);
-          if (esPrimeraCarga) {
-            ultimoIdNotificado = masReciente.id;
-          } else if (ultimoIdNotificado !== null && masReciente.id > ultimoIdNotificado) {
-            ultimoIdNotificado = masReciente.id;
-            await dispararNotificacion(
-              "Ingreso al Colegio - I.E. 7228",
-              masReciente.nombre + " pasó el escáner QR a las " + masReciente.hora + " (" + masReciente.estado + ")"
-            );
-          }
-        } else if (esPrimeraCarga) {
-          ultimoIdNotificado = 0;
-        }
-      } catch (e) {}
-    }
-
-    async function abrirPanelPrincipal(usuario, rol) {
-      usuarioActual = usuario;
-      document.getElementById("vista-login").classList.add("hidden");
-      document.getElementById("btn-salir").classList.remove("hidden");
-      await prepararNotificaciones();
-
-      if (rol === "Padre") {
-        document.getElementById("vista-panel").classList.add("hidden");
-        document.getElementById("panel-admin").classList.add("hidden");
-        document.getElementById("vista-padre").classList.remove("hidden");
-        ultimoIdNotificado = null;
-        await consultarAsistenciaHijo(usuario, true);
-        if (timerPadre) clearInterval(timerPadre);
-        timerPadre = setInterval(function() { consultarAsistenciaHijo(usuario, false); }, 4000);
-        return;
-      }
-
-      document.getElementById("vista-padre").classList.add("hidden");
-      document.getElementById("vista-panel").classList.remove("hidden");
-      mantenerPantallaActiva();
-      var selT = document.getElementById("selector-turno");
-      if (selT) { selT.value = (new Date().getHours() >= 13) ? "Tarde" : "Mañana"; }
-
-      if (usuario === "MikeSanchez" && rol === "Administrador") {
-        document.getElementById("panel-admin").classList.remove("hidden");
-      } else {
-        document.getElementById("panel-admin").classList.add("hidden");
-      }
-
-      if (typeof Html5Qrcode !== "undefined") {
-        scanner = new Html5Qrcode("reader");
-        scanner.start(
-          { facingMode: "environment" },
-          { fps: 12, qrbox: { width: 220, height: 220 } },
-          function(decodedText) {
-            var ahora = Date.now();
-            if (decodedText !== ultCod || (ahora - ultT) > 2500) {
-              ultCod = decodedText;
-              ultT = ahora;
-              procesarAsistencia(decodedText);
-            }
-          },
-          function(error) {}
-        ).catch(function(err) {
-          document.getElementById("reader").innerHTML = "<p style='color:#dc2626;font-size:13px;'>Error cámara trasera: " + err + "</p>";
-        });
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", function() {
-      var sesionGuardada = localStorage.getItem("intranet_7228_sesion");
-      if (sesionGuardada) {
-        try {
-          var s = JSON.parse(sesionGuardada);
-          if (s && s.usuario) {
-            abrirPanelPrincipal(s.usuario, s.rol);
-          }
-        } catch (e) {}
-      }
-    });
-
-    async function iniciarSesion(e) {
-      e.preventDefault();
-      var btn = e.target.querySelector("button[type='submit']");
-      var errBox = document.getElementById("error-login");
-      var u = document.getElementById("usuario").value.trim();
-      var p = document.getElementById("clave").value.trim();
-      var recordar = document.getElementById("recordar-sesion").checked;
-
-      btn.disabled = true;
-      btn.textContent = "Conectando...";
-      errBox.textContent = "";
-
-      try {
-        var res = await fetch(API_URL + "/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ usuario: u, clave: p })
-        });
-        var data = await res.json();
-        if (!data.ok) {
-          errBox.textContent = data.mensaje;
-          return;
-        }
-
-        if (recordar) {
-          localStorage.setItem("intranet_7228_sesion", JSON.stringify({ usuario: data.usuario, rol: data.rol }));
-        } else {
-          localStorage.removeItem("intranet_7228_sesion");
-        }
-
-        await abrirPanelPrincipal(data.usuario, data.rol);
-      } catch (err) {
-        errBox.textContent = "Error de red: " + err.message;
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Ingresar al Sistema";
-      }
-    }
-
-    function cerrarSesion() {
-      localStorage.removeItem("intranet_7228_sesion");
-      if (timerPadre) { clearInterval(timerPadre); timerPadre = null; }
-      if (wakeLock) { wakeLock.release().catch(function(){}); wakeLock = null; }
-      if (scanner) {
-        scanner.stop().then(function(){ scanner.clear(); }).catch(function(){});
-        scanner = null;
-      }
-      document.getElementById("reader").innerHTML = "";
-      document.getElementById("vista-panel").classList.add("hidden");
+    <div id="vista-padre" class="container hidden">
+<div class="card">
+<h3 style="color:#0033CC;">Asistencia de mi Hijo(a)</h3>
+<div style="overflow-x:auto;">
+<table>
+<thead><tr><th>Fecha</th><th>Hora</th><th>Estudiante</th><th>Grado</th><th>Estado</th></tr></thead>
+<tbody id="tabla-padre"></tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+<footer>
+📍 Ubicación: Av. Víctor Malásquez, Manchay - Pachacámac, Lima, Perú | I.E. 7228 Peruano Canadiense
+</footer>
+<div id="modal-actualizacion" class="hidden" style="position:fixed;inset:0;z-index:99998;background:rgba(15,23,42,0.75);display:flex;align-items:center;justify-content:center;padding:20px;">
+<div style="background:white;max-width:340px;width:100%;border-radius:16px;padding:24px;text-align:center;box-shadow:0 20px 35px rgba(0,0,0,0.3);border-top:6px solid #0033CC;">
+<div style="font-size:36px;margin-bottom:8px;">🚀</div>
+<h3 style="color:#002288;margin-bottom:8px;font-size:18px;">¡Actualización Disponible!</h3>
+<p id="texto-actualizacion" style="color:#475569;font-size:13px;line-height:1.4;margin-bottom:18px;">Hay una nueva versión disponible.</p>
+<button id="btn-descargar-update" type="button" class="btn-primary" style="margin-bottom:8px;">Actualizar ahora</button>
+<button id="btn-cerrar-update" type="button" onclick="document.getElementById('modal-actualizacion').classList.add('hidden')" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;padding:6px;">Más tarde</button>
+</div>
+</div>
+<script>
+var API_URL = "";
+var VERSION_APP_LOCAL = "1.4";
+var usuarioActual = "";
+var puntuales = 0;
+var tardanzas = 0;
+var scanner = null;
+var ultCod = "";
+var ultT = 0;
+var wakeLock = null;
+var timerPadre = null;
+var ultimoIdNotificado = null;
+setTimeout(function() {
+var sp = document.getElementById("pantalla-carga-7228");
+if (sp) {
+sp.style.opacity = "0";
+setTimeout(function() { if (sp) sp.remove(); }, 500);
+}
+}, 2000);
+function actualizarReloj() {
+var ahora = new Date();
+var h = String(ahora.getHours()).padStart(2, "0");
+var m = String(ahora.getMinutes()).padStart(2, "0");
+var s = String(ahora.getSeconds()).padStart(2, "0");
+var el = document.getElementById("reloj");
+if (el) el.textContent = h + ":" + m + ":" + s;
+}
+actualizarReloj();
+setInterval(actualizarReloj, 1000);
+var versionVerificada = false;
+async function comprobarActualizacion() {
+if (versionVerificada) return;
+try {
+var res = await fetch(API_URL + "/api/version?t=" + Date.now());
+var info = await res.json();
+if (info && info.version) {
+versionVerificada = true;
+if (info.version !== VERSION_APP_LOCAL) {
+document.getElementById("texto-actualizacion").textContent = info.mensaje || ("Nueva versión " + info.version + " disponible.");
+var btnDesc = document.getElementById("btn-descargar-update");
+if (btnDesc) {
+btnDesc.onclick = function() {
+localStorage.setItem("version_intranet_7228", info.version); if (info.url_apk) { window.open(info.url_apk, "_blank"); }
+window.location.reload();
+};
+}
+if (info.obligatoria) {
+var btnCerrar = document.getElementById("btn-cerrar-update");
+if (btnCerrar) btnCerrar.style.display = "none";
+}
+document.getElementById("modal-actualizacion").classList.remove("hidden");
+}
+}
+} catch (e) {
+setTimeout(comprobarActualizacion, 5000);
+}
+}
+setTimeout(comprobarActualizacion, 2500);
+function alternarClave() {
+var inputClave = document.getElementById("clave");
+var btnOjo = document.getElementById("btn-ojo");
+if (inputClave.type === "password") {
+inputClave.type = "text";
+btnOjo.textContent = "👁️";
+} else {
+inputClave.type = "password";
+btnOjo.textContent = "👁️‍🗨️";
+}
+}
+async function mantenerPantallaActiva() {
+try {
+if ("wakeLock" in navigator) {
+wakeLock = await navigator.wakeLock.request("screen");
+}
+} catch (e) {}
+}
+async function prepararNotificaciones() {
+if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+var LN = window.Capacitor.Plugins.LocalNotifications;
+await LN.requestPermissions();
+await LN.createChannel({
+id: "asistencia_7228",
+name: "Registro de Asistencia",
+importance: 5,
+vibration: true,
+visibility: 1
+});
+}
+}
+async function dispararNotificacion(titulo, cuerpo) {
+if (navigator.vibrate) navigator.vibrate(250);
+if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+var LN = window.Capacitor.Plugins.LocalNotifications;
+await LN.schedule({
+notifications: [{
+title: titulo,
+body: cuerpo,
+id: Math.floor(Date.now() / 1000) % 100000,
+channelId: "asistencia_7228",
+schedule: { at: new Date(Date.now() + 100) }
+}]
+});
+}
+}
+async function consultarAsistenciaHijo(usuarioPadre, esPrimeraCarga) {
+try {
+var res = await fetch(API_URL + "/api/padre/asistencias/" + encodeURIComponent(usuarioPadre));
+var data = await res.json();
+if (!data.ok) return;
+var tbody = document.getElementById("tabla-padre");
+tbody.innerHTML = "";
+data.registros.forEach(function(r) {
+var tr = document.createElement("tr");
+var badge = r.estado.indexOf("Tardanza") !== -1 ? "background:#fef3c7;color:#92400e;" : "background:#dbeafe;color:#0033CC;";
+tr.innerHTML = "<td>" + r.fecha + "</td>" +
+"<td><b>" + r.hora + "</b></td>" +
+"<td>" + r.nombre + "</td>" +
+"<td>" + r.grado + "</td>" +
+"<td><span style='padding:3px 8px;border-radius:10px;font-size:11px;font-weight:bold;" + badge + "'>" + r.estado + "</span></td>";
+tbody.appendChild(tr);
+});
+if (data.registros.length > 0) {
+var masReciente = data.registros.at(0);
+if (esPrimeraCarga) {
+ultimoIdNotificado = masReciente.id;
+} else if (ultimoIdNotificado !== null && masReciente.id > ultimoIdNotificado) {
+ultimoIdNotificado = masReciente.id;
+await dispararNotificacion(
+"Ingreso al Colegio - I.E. 7228",
+masReciente.nombre + " pasó el escáner QR a las " + masReciente.hora + " (" + masReciente.estado + ")"
+);
+}
+} else if (esPrimeraCarga) {
+ultimoIdNotificado = 0;
+}
+} catch (e) {}
+}
+async function abrirPanelPrincipal(usuario, rol) {
+usuarioActual = usuario;
+document.getElementById("vista-login").classList.add("hidden");
+document.getElementById("btn-salir").classList.remove("hidden");
+await prepararNotificaciones();
+if (rol === "Padre") {
+document.getElementById("vista-panel").classList.add("hidden");
+document.getElementById("panel-admin").classList.add("hidden");
+document.getElementById("vista-padre").classList.remove("hidden");
+ultimoIdNotificado = null;
+await consultarAsistenciaHijo(usuario, true);
+if (timerPadre) clearInterval(timerPadre);
+timerPadre = setInterval(function() { consultarAsistenciaHijo(usuario, false); }, 4000);
+return;
+}
+document.getElementById("vista-padre").classList.add("hidden");
+document.getElementById("vista-panel").classList.remove("hidden");
+mantenerPantallaActiva();
+var selT = document.getElementById("selector-turno");
+if (selT) { selT.value = (new Date().getHours() >= 13) ? "Tarde" : "Mañana"; }
+if (usuario === "MikeSanchez" && rol === "Administrador") {
+document.getElementById("panel-admin").classList.remove("hidden");
+} else {
+document.getElementById("panel-admin").classList.add("hidden");
+}
+if (typeof Html5Qrcode !== "undefined") {
+scanner = new Html5Qrcode("reader");
+scanner.start(
+{ facingMode: "environment" },
+{ fps: 12, qrbox: { width: 220, height: 220 } },
+function(decodedText) {
+var ahora = Date.now();
+if (decodedText !== ultCod || (ahora - ultT) > 2500) {
+ultCod = decodedText;
+ultT = ahora;
+procesarAsistencia(decodedText);
+}
+},
+function(error) {}
+).catch(function(err) {
+document.getElementById("reader").innerHTML = "<p style='color:#dc2626;font-size:13px;'>Error cámara trasera: " + err + "</p>";
+});
+}
+}
+window.addEventListener("DOMContentLoaded", function() {
+var sesionGuardada = localStorage.getItem("intranet_7228_sesion");
+if (sesionGuardada) {
+try {
+var s = JSON.parse(sesionGuardada);
+if (s && s.usuario) {
+abrirPanelPrincipal(s.usuario, s.rol);
+}
+} catch (e) {}
+}
+});
+async function iniciarSesion(e) {
+e.preventDefault();
+var btn = e.target.querySelector("button[type='submit']");
+var errBox = document.getElementById("error-login");
+var u = document.getElementById("usuario").value.trim();
+var p = document.getElementById("clave").value.trim();
+var recordar = document.getElementById("recordar-sesion").checked;
+btn.disabled = true;
+btn.textContent = "Conectando...";
+errBox.textContent = "";
+try {
+var res = await fetch(API_URL + "/api/login", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({ usuario: u, clave: p })
+});
+var data = await res.json();
+if (!data.ok) {
+errBox.textContent = data.mensaje;
+return;
+}
+if (recordar) {
+localStorage.setItem("intranet_7228_sesion", JSON.stringify({ usuario: data.usuario, rol: data.rol }));
+} else {
+localStorage.removeItem("intranet_7228_sesion");
+}
+await abrirPanelPrincipal(data.usuario, data.rol);
+} catch (err) {
+errBox.textContent = "Error de red: " + err.message;
+} finally {
+btn.disabled = false;
+btn.textContent = "Ingresar al Sistema";
+}
+}
+function cerrarSesion() {
+localStorage.removeItem("intranet_7228_sesion");
+if (timerPadre) { clearInterval(timerPadre); timerPadre = null; }
+if (wakeLock) { wakeLock.release().catch(function(){}); wakeLock = null; }
+if (scanner) {
+scanner.stop().then(function(){ scanner.clear(); }).catch(function(){});
+scanner = null;
+}
+document.getElementById("reader").innerHTML = "";
+document.getElementById("vista-panel").classList.add("hidden");
 document.getElementById("vista-padre").classList.add("hidden");
 document.getElementById("panel-admin").classList.add("hidden");
 document.getElementById("btn-salir").classList.add("hidden");
@@ -529,14 +461,14 @@ if (data.estado.indexOf("Tardanza") !== -1) { tardanzas++; } else { puntuales++;
 document.getElementById("cont-puntual").textContent = puntuales;
 document.getElementById("cont-tardanza").textContent = tardanzas;
 al.className = data.estado.indexOf("Tardanza") !== -1 ? "alerta alerta-tarde" : "alerta alerta-ok";
-al.innerHTML = "Registrado: " + data.nombre + " (" + data.estado + ") - " + data.hora;
+al.innerHTML = "Registrado: <b>" + data.nombre + "</b> (" + data.estado + ") - " + data.hora;
 var est = data.estado.indexOf("Tardanza") !== -1 ? "background:#fef3c7;color:#92400e;" : "background:#dbeafe;color:#0033CC;";
 var tr = document.createElement("tr");
 tr.innerHTML = "<td>" + data.hora + "</td>" +
-"<td>" + data.codigo + "</td>" +
+"<td><b>" + data.codigo + "</b></td>" +
 "<td>" + data.nombre + "</td>" +
 "<td>" + data.grado + "</td>" +
-"<td>" + data.estado + "</td>";
+"<td><span style='padding:3px 8px;border-radius:10px;font-size:11px;font-weight:bold;" + est + "'>" + data.estado + "</span></td>";
 document.getElementById("tabla-asistencia").prepend(tr);
 } catch (err) {
 al.className = "alerta alerta-error";
@@ -566,5 +498,6 @@ var data = await res.json();
 alert(data.mensaje);
 if (data.ok) e.target.reset();
 }
-</script></body>
+</script>
+</body>
 </html>
