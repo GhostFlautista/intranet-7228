@@ -139,13 +139,13 @@ def login(datos: LoginReq):
     user = c.fetchone()
     conn.close()
     if not user:
-        return {"ok": False, "mensaje": "Nueva versión 1.4 disponible: Encabezado navideño unificado, Portal de Padres y tablas ordenadas."}
+        return {"ok": False, "mensaje": "Nueva versión 1.6 disponible: Exportación a Excel habilitada para auxiliares."}
     return {"ok": True, "usuario": datos.usuario, "nombre": user[0], "rol": user[1]}
 
 @app.post("/api/usuarios")
 def crear_usuario(datos: NuevoUsuarioReq):
     if datos.solicitante != "MikeSanchez":
-        return {"ok": False, "mensaje": "Nueva versión 1.4 disponible: Encabezado navideño unificado, Portal de Padres y tablas ordenadas."}
+        return {"ok": False, "mensaje": "Nueva versión 1.6 disponible: Exportación a Excel habilitada para auxiliares."}
     conn = sqlite3.connect("asistencia_7228.db")
     c = conn.cursor()
     try:
@@ -157,7 +157,7 @@ def crear_usuario(datos: NuevoUsuarioReq):
         conn.commit()
         return {"ok": True, "mensaje": f"Usuario {datos.usuario} ({datos.rol}) creado correctamente"}
     except sqlite3.IntegrityError:
-        return {"ok": False, "mensaje": "Nueva versión 1.4 disponible: Encabezado navideño unificado, Portal de Padres y tablas ordenadas."}
+        return {"ok": False, "mensaje": "Nueva versión 1.6 disponible: Exportación a Excel habilitada para auxiliares."}
     finally:
         conn.close()
 
@@ -232,8 +232,8 @@ def obtener_asistencias_padre(usuario_padre: str):
 @app.get("/api/version")
 def verificar_version():
     return {
-        "version": "1.4",
+        "version": "1.6",
         "obligatoria": False,
-        "mensaje": "Nueva versión 1.4 disponible: Encabezado navideño unificado, Portal de Padres y tablas ordenadas.",
-        "url_apk": "https://github.com/GhostFlautista/intranet-7228/releases/download/v1.4/app-debug.apk"
+        "mensaje": "Nueva versión 1.6 disponible: Exportación a Excel habilitada para auxiliares.",
+        "url_apk": "https://github.com/GhostFlautista/intranet-7228/releases/download/v1.6/app-debug.apk"
     }
