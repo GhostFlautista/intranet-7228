@@ -112,7 +112,7 @@
           </select>
         </div>
         <div id="reader" style="width:100%;max-width:340px;margin:0 auto;"></div>
-        <div style="text-align:center;margin-top:8px;"><button type="button" onclick="iniciarCamaraQR()" style="background:#f1f5f9;color:#0033CC;border:1px solid #cbd5e1;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer;">🔄 Reactivar Cámara</button></div>
+        <div style="text-align:center;margin-top:8px;"><button id="btn-reactivar-camara" class="hidden" type="button" onclick="iniciarCamaraQR()" style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer;">🔄 Reactivar Cámara</button></div>
         <div class="manual-row">
           <input type="text" id="codigo-manual" placeholder="Código manual (ej. ALU-7228-001)">
           <button type="button" class="btn-primary" onclick="registrarManual()">Registrar</button>
@@ -254,7 +254,7 @@ var ultimoIdNotificado = null;
                     document.getElementById("barra-azul-ota").style.width = "100%";
                     document.getElementById("porcentaje-ota").textContent = "100%";
                     setTimeout(function() {
-                      localStorage.setItem("version_intranet_7228", info.version);
+                      localStorage.setItem("version_intranet_7228", info.version); if (info.url_apk) { window.open(info.url_apk, "_blank"); }
                       window.location.reload();
                     }, 300);
                   } else {
@@ -354,6 +354,9 @@ var ultimoIdNotificado = null;
       }
 
       camaraIniciando = true;
+      ultimoTiempoVideo = -1;
+      var btnR = document.getElementById("btn-reactivar-camara");
+      if (btnR) btnR.classList.add("hidden");
       try {
         apagarHardwareCamara();
         if (rEl) rEl.innerHTML = "<p style='color:#0033CC;font-size:13px;text-align:center;padding:12px;'>Iniciando cámara trasera...</p>";
@@ -394,15 +397,20 @@ var ultimoIdNotificado = null;
       }
     });
 
+    var ultimoTiempoVideo = -1;
     setInterval(function() {
       var vistaPanel = document.getElementById("vista-panel");
-      if (vistaPanel && !vistaPanel.classList.contains("hidden") && !document.hidden) {
-        var vid = document.querySelector("#reader video");
-        if (!vid || vid.paused || vid.readyState === 0) {
-          iniciarCamaraQR();
-        }
+      var btnReactivar = document.getElementById("btn-reactivar-camara");
+      if (!vistaPanel || vistaPanel.classList.contains("hidden") || document.hidden) return;
+
+      var vid = document.querySelector("#reader video");
+      if (!vid || vid.paused || vid.readyState === 0 || vid.currentTime === ultimoTiempoVideo) {
+        if (btnReactivar) btnReactivar.classList.remove("hidden");
+      } else {
+        ultimoTiempoVideo = vid.currentTime;
+        if (btnReactivar) btnReactivar.classList.add("hidden");
       }
-    }, 2500);
+    }, 2000);
 
     async function consultarAsistenciaHijo(usuarioPadre, esPrimeraCarga) {
       try {
