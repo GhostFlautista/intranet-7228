@@ -232,8 +232,8 @@ def obtener_asistencias_padre(usuario_padre: str):
 @app.get("/api/version")
 def verificar_version():
     return {
-        "version": "2.6",
+        "version": "2.7",
         "obligatoria": False,
-        "mensaje": "Nueva versión 2.6 disponible: Botón inteligente de reactivación de cámara.",
-        "url_apk": "https://github.com/GhostFlautista/intranet-7228/releases/download/v2.6/app-debug.apk"
+        "mensaje": "Nueva versión 2.7 disponible: Botón de cámara oculto automáticamente mientras transmite.",
+        "url_apk": "https://github.com/GhostFlautista/intranet-7228/releases/download/v2.7/app-debug.apk"
     }

@@ -355,6 +355,7 @@ var ultimoIdNotificado = null;
 
       camaraIniciando = true;
       ultimoTiempoVideo = -1;
+      graciaCamaraHasta = Date.now() + 3500;
       var btnR = document.getElementById("btn-reactivar-camara");
       if (btnR) btnR.classList.add("hidden");
       try {
@@ -398,19 +399,34 @@ var ultimoIdNotificado = null;
     });
 
     var ultimoTiempoVideo = -1;
+      graciaCamaraHasta = Date.now() + 3500;
+    var graciaCamaraHasta = 0;
+
     setInterval(function() {
       var vistaPanel = document.getElementById("vista-panel");
       var btnReactivar = document.getElementById("btn-reactivar-camara");
       if (!vistaPanel || vistaPanel.classList.contains("hidden") || document.hidden) return;
+      if (camaraIniciando || Date.now() < graciaCamaraHasta) {
+        if (btnReactivar) btnReactivar.classList.add("hidden");
+        return;
+      }
 
       var vid = document.querySelector("#reader video");
-      if (!vid || vid.paused || vid.readyState === 0 || vid.currentTime === ultimoTiempoVideo) {
+      var pistaActiva = false;
+      if (vid && vid.srcObject) {
+        var tracks = vid.srcObject.getVideoTracks();
+        if (tracks.length > 0 && tracks.at(0).readyState === "live") {
+          pistaActiva = true;
+        }
+      }
+
+      if (!vid || !pistaActiva || vid.paused || vid.readyState === 0 || vid.currentTime === ultimoTiempoVideo) {
         if (btnReactivar) btnReactivar.classList.remove("hidden");
       } else {
         ultimoTiempoVideo = vid.currentTime;
         if (btnReactivar) btnReactivar.classList.add("hidden");
       }
-    }, 2000);
+    }, 2500);
 
     async function consultarAsistenciaHijo(usuarioPadre, esPrimeraCarga) {
       try {
