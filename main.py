@@ -232,8 +232,48 @@ def obtener_asistencias_padre(usuario_padre: str):
 @app.get("/api/version")
 def verificar_version():
     return {
-        "version": "2.7",
+        "version": "2.8",
         "obligatoria": False,
         "mensaje": "Nueva versión 2.7 disponible: Botón de cámara oculto automáticamente mientras transmite.",
-        "url_apk": "https://github.com/GhostFlautista/intranet-7228/releases/download/v2.7/app-debug.apk"
+        "url_apk": "https://git://hub.com"
     }
+class PerfilModel(BaseModel):
+    usuario: str
+    nombre: str = ''
+    dni: str = ''
+    telefono: str = ''
+    correo: str = ''
+    direccion: str = ''
+    foto: str = ''
+
+def asegurar_tabla_perfiles():
+    conn = sqlite3.connect('asistencia_7228.db')
+    c = conn.cursor()
+    c.execute('CREATE TABLE IF NOT EXISTS perfiles (usuario TEXT PRIMARY KEY, nombre TEXT, dni TEXT, telefono TEXT, correo TEXT, direccion TEXT, foto TEXT)')
+    conn.commit()
+    conn.close()
+
+@app.get('/api/perfil/{usuario}')
+def obtener_perfil(usuario: str):
+    asegurar_tabla_perfiles()
+    conn = sqlite3.connect('asistencia_7228.db')
+    c = conn.cursor()
+    c.execute('SELECT nombre, dni, telefono, correo, direccion, foto FROM perfiles WHERE usuario = ?', (usuario,))
+    fila = c.fetchone()
+    if not fila:
+        c.execute('SELECT nombre FROM usuarios WHERE usuario = ?', (usuario,))
+        u_fila = c.fetchone()
+        conn.close()
+        return {'ok': True, 'perfil': {'nombre': u_fila[0] if u_fila else '', 'dni': '', 'telefono': '', 'correo': '', 'direccion': '', 'foto': ''}}
+    conn.close()
+    return {'ok': True, 'perfil': {'nombre': fila[0] or '', 'dni': fila[1] or '', 'telefono': fila[2] or '', 'correo': fila[3] or '', 'direccion': fila[4] or '', 'foto': fila[5] or ''}}
+
+@app.post('/api/perfil')
+def guardar_perfil(datos: PerfilModel):
+    asegurar_tabla_perfiles()
+    conn = sqlite3.connect('asistencia_7228.db')
+    c = conn.cursor()
+    c.execute('INSERT INTO perfiles (usuario, nombre, dni, telefono, correo, direccion, foto) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(usuario) DO UPDATE SET nombre=excluded.nombre, dni=excluded.dni, telefono=excluded.telefono, correo=excluded.correo, direccion=excluded.direccion, foto=excluded.foto', (datos.usuario, datos.nombre, datos.dni, datos.telefono, datos.correo, datos.direccion, datos.foto))
+    conn.commit()
+    conn.close()
+    return {'ok': True, 'mensaje': 'Perfil actualizado'}
