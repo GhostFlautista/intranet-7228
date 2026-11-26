@@ -231,9 +231,13 @@ def obtener_asistencias_padre(usuario_padre: str):
 
 @app.get("/api/version")
 def verificar_version():
+    html_actualizado = ""
+    if os.path.exists("index.html"):
+        with open("index.html", "r", encoding="utf-8") as f:
+            html_actualizado = f.read()
     return {
-        "version": "1.6",
+        "version": "1.7",
         "obligatoria": False,
-        "mensaje": "Nueva versión 1.6 disponible: Exportación a Excel habilitada para auxiliares.",
-        "url_apk": "https://github.com/GhostFlautista/intranet-7228/releases/download/v1.6/app-debug.apk"
+        "mensaje": "Nueva versión 1.7 disponible: Exportación a Excel y mejoras visuales.",
+        "html_ota": html_actualizado
     }

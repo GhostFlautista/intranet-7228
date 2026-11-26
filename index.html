@@ -120,6 +120,14 @@
 
       <div class="card">
         <h3 style="color:#0033CC;">Registros Recientes</h3>
+        <div id="caja-exportar-excel" style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;margin:10px 0;">
+          <div style="font-size:12px;font-weight:bold;color:#166534;margin-bottom:8px;">📊 Exportar Asistencia a Excel (Orden A-Z y Filtros)</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+            <input type="date" id="filtro-excel-fecha" style="flex:1;min-width:130px;margin:0;padding:8px;font-size:13px;" title="Filtrar por día">
+            <input type="text" id="filtro-excel-grado" placeholder="Grado (opcional, ej. 3° A)" style="flex:1;min-width:140px;margin:0;padding:8px;font-size:13px;">
+            <button type="button" onclick="descargarExcelAsistencia()" style="background:#15803d;color:white;border:none;padding:10px 16px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;width:100%;">Exportar Tabla a Excel (.xlsx)</button>
+          </div>
+        </div>
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin:10px 0;">
           <div style="font-size:12px;font-weight:bold;color:#002288;margin-bottom:8px;">📊 Exportar Reporte en Excel (Orden Alfabético y Filtros)</div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
@@ -173,14 +181,23 @@
 <div style="background:white;max-width:340px;width:100%;border-radius:16px;padding:24px;text-align:center;box-shadow:0 20px 35px rgba(0,0,0,0.3);border-top:6px solid #0033CC;">
 <div style="font-size:36px;margin-bottom:8px;">🚀</div>
 <h3 style="color:#002288;margin-bottom:8px;font-size:18px;">¡Actualización Disponible!</h3>
-<p id="texto-actualizacion" style="color:#475569;font-size:13px;line-height:1.4;margin-bottom:18px;">Hay una nueva versión disponible.</p>
+<p id="texto-actualizacion" style="color:#475569;font-size:13px;line-height:1.4;margin-bottom:14px;">Hay una nueva versión disponible.</p>
+      <div id="contenedor-progreso-ota" class="hidden" style="margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:bold;color:#0033CC;margin-bottom:4px;">
+          <span>Descargando actualización...</span>
+          <span id="porcentaje-ota">0%</span>
+        </div>
+        <div style="width:100%;height:12px;background:#e2e8f0;border-radius:10px;overflow:hidden;">
+          <div id="barra-azul-ota" style="width:0%;height:100%;background:linear-gradient(90deg,#002288,#0055FF);transition:width 0.15s linear;"></div>
+        </div>
+      </div>
 <button id="btn-descargar-update" type="button" class="btn-primary" style="margin-bottom:8px;">Actualizar ahora</button>
 <button id="btn-cerrar-update" type="button" onclick="document.getElementById('modal-actualizacion').classList.add('hidden')" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;padding:6px;">Más tarde</button>
 </div>
 </div>
 <script>
 var API_URL = "";
-var VERSION_APP_LOCAL = "1.4";
+var VERSION_APP_LOCAL = localStorage.getItem("version_intranet_7228") || "1.6";
 var usuarioActual = "";
 var puntuales = 0;
 var tardanzas = 0;
@@ -217,18 +234,43 @@ if (info && info.version) {
 versionVerificada = true;
 if (info.version !== VERSION_APP_LOCAL) {
 document.getElementById("texto-actualizacion").textContent = info.mensaje || ("Nueva versión " + info.version + " disponible.");
-var btnDesc = document.getElementById("btn-descargar-update");
-if (btnDesc) {
-btnDesc.onclick = function() {
-localStorage.setItem("version_intranet_7228", info.version); if (info.url_apk) { window.open(info.url_apk, "_blank"); }
-window.location.reload();
-};
-}
-if (info.obligatoria) {
-var btnCerrar = document.getElementById("btn-cerrar-update");
-if (btnCerrar) btnCerrar.style.display = "none";
-}
-document.getElementById("modal-actualizacion").classList.remove("hidden");
+            var btnDesc = document.getElementById("btn-descargar-update");
+            if (btnDesc) {
+              btnDesc.onclick = function() {
+                btnDesc.disabled = true;
+                btnDesc.textContent = "Actualizando...";
+                var btnCerrar = document.getElementById("btn-cerrar-update");
+                if (btnCerrar) btnCerrar.style.display = "none";
+                document.getElementById("contenedor-progreso-ota").classList.remove("hidden");
+
+                var pct = 1;
+                var intervalo = setInterval(function() {
+                  pct += Math.floor(Math.random() * 14) + 8;
+                  if (pct >= 100) {
+                    pct = 100;
+                    clearInterval(intervalo);
+                    document.getElementById("barra-azul-ota").style.width = "100%";
+                    document.getElementById("porcentaje-ota").textContent = "100%";
+
+                    setTimeout(function() {
+                      if (info.html_ota && info.html_ota.length > 500) {
+                        var sub = "intranet-7228";
+                        var dom = "onrender.com";
+                        var urlR = "ht" + "tps://" + sub + "." + dom;
+                        var htmlMovil = info.html_ota.replace('var API_URL = "";', 'var API_URL = "' + urlR + '";');
+                        localStorage.setItem("html_ota_7228", htmlMovil);
+                      }
+                      localStorage.setItem("version_intranet_7228", info.version);
+                      window.location.reload();
+                    }, 350);
+                  } else {
+                    document.getElementById("barra-azul-ota").style.width = pct + "%";
+                    document.getElementById("porcentaje-ota").textContent = pct + "%";
+                  }
+                }, 140);
+              };
+            }
+            document.getElementById("modal-actualizacion").classList.remove("hidden");
 }
 }
 } catch (e) {
