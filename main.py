@@ -235,5 +235,5 @@ def verificar_version():
         "version": "1.1",
         "obligatoria": False,
         "mensaje": "Nueva versión 1.1 disponible: Incluye Portal de Padres, turnos Mañana/Tarde y mejoras en el escáner.",
-        "url_apk": "https://github.com"
+        "url_apk": "https://github.com/GhostFlautista/intranet-7228/releases/download/v1.1/app-debug.apk"
     }
