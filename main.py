@@ -139,13 +139,13 @@ def login(datos: LoginReq):
     user = c.fetchone()
     conn.close()
     if not user:
-        return {"ok": False, "mensaje": "Nueva versión 2.0 disponible: Validación obligatoria en reportes Excel y mejora de filtros."}
+        return {"ok": False, "mensaje": "Nueva versión 2.1 disponible: Descarga directa de reportes en Excel (.xlsx) habilitada."}
     return {"ok": True, "usuario": datos.usuario, "nombre": user[0], "rol": user[1]}
 
 @app.post("/api/usuarios")
 def crear_usuario(datos: NuevoUsuarioReq):
     if datos.solicitante != "MikeSanchez":
-        return {"ok": False, "mensaje": "Nueva versión 2.0 disponible: Validación obligatoria en reportes Excel y mejora de filtros."}
+        return {"ok": False, "mensaje": "Nueva versión 2.1 disponible: Descarga directa de reportes en Excel (.xlsx) habilitada."}
     conn = sqlite3.connect("asistencia_7228.db")
     c = conn.cursor()
     try:
@@ -157,7 +157,7 @@ def crear_usuario(datos: NuevoUsuarioReq):
         conn.commit()
         return {"ok": True, "mensaje": f"Usuario {datos.usuario} ({datos.rol}) creado correctamente"}
     except sqlite3.IntegrityError:
-        return {"ok": False, "mensaje": "Nueva versión 2.0 disponible: Validación obligatoria en reportes Excel y mejora de filtros."}
+        return {"ok": False, "mensaje": "Nueva versión 2.1 disponible: Descarga directa de reportes en Excel (.xlsx) habilitada."}
     finally:
         conn.close()
 
@@ -232,8 +232,78 @@ def obtener_asistencias_padre(usuario_padre: str):
 @app.get("/api/version")
 def verificar_version():
     return {
-        "version": "2.0",
+        "version": "2.1",
         "obligatoria": False,
-        "mensaje": "Nueva versión 2.0 disponible: Validación obligatoria en reportes Excel y mejora de filtros.",
+        "mensaje": "Nueva versión 2.1 disponible: Descarga directa de reportes en Excel (.xlsx) habilitada.",
         "texto_turno_tarde": "Turno Tarde (Ingreso 1:00pm | Salida 6:10pm)"
     }
+
+from io import BytesIO
+from fastapi.responses import StreamingResponse
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
+
+@app.get("/api/reporte/excel")
+def descargar_reporte_excel(fecha: str = "", grado: str = ""):
+    conn = sqlite3.connect("asistencia_7228.db")
+    c = conn.cursor()
+
+    query = """
+        SELECT a.fecha, a.hora, al.codigo, al.nombre, al.grado_seccion, a.estado, a.registrado_por
+        FROM asistencias a
+        JOIN alumnos al ON al.codigo = a.codigo_alumno
+        WHERE 1=1
+    """
+    params = []
+    if fecha.strip():
+        query += " AND a.fecha = ?"
+        params.append(fecha.strip())
+    if grado.strip():
+        query += " AND al.grado_seccion LIKE ?"
+        params.append(f"%{grado.strip()}%")
+
+    query += " ORDER BY al.nombre ASC, a.fecha DESC, a.hora ASC"
+    c.execute(query, params)
+    filas = c.fetchall()
+    conn.close()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Asistencia 7228"
+
+    dias_es = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+    encabezados = ["Día", "Fecha", "Hora", "Código", "Estudiante (A-Z)", "Grado y Sección", "Estado / Turno", "Registrado por"]
+    ws.append(encabezados)
+
+    header_fill = PatternFill(start_color="0033CC", end_color="0033CC", fill_type="solid")
+    header_font = Font(color="FFFFFF", bold=True)
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    for f in filas:
+        fecha_val, hora_val, cod_val, nom_val, grado_val, est_val, reg_val = f
+        try:
+            dt = datetime.strptime(fecha_val, "%Y-%m-%d")
+            dia_nombre = dias_es[dt.weekday()]
+        except Exception:
+            dia_nombre = ""
+        ws.append([dia_nombre, fecha_val, hora_val, cod_val, nom_val, grado_val, est_val, reg_val])
+
+    ws.auto_filter.ref = f"A1:H{max(len(filas) + 1, 2)}"
+
+    anchos = {"A": 14, "B": 14, "C": 12, "D": 16, "E": 34, "F": 22, "G": 22, "H": 18}
+    for col_letra, ancho in anchos.items():
+        ws.column_dimensions[col_letra].width = ancho
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    nombre_archivo = f"Reporte_Asistencia_7228_{fecha if fecha else 'General'}.xlsx"
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={nombre_archivo}"}
+    )
