@@ -227,17 +227,13 @@ def obtener_asistencias_padre(usuario_padre: str):
             "hora": f[5],
             "estado": f[6]
         })
-    return {"ok": True, "registros": registros}
+    return {"ok": True, "registros": registros}nn
 
 @app.get("/api/version")
 def verificar_version():
-    html_actualizado = ""
-    if os.path.exists("index.html"):
-        with open("index.html", "r", encoding="utf-8") as f:
-            html_actualizado = f.read()
     return {
-        "version": "1.7",
+        "version": "1.9",
         "obligatoria": False,
-        "mensaje": "Nueva versión 1.7 disponible: Exportación a Excel y mejoras visuales.",
-        "html_ota": html_actualizado
+        "mensaje": "Nueva versión 1.9 disponible: Etiquetas de turno actualizadas solo con Ingreso y Salida.",
+        "texto_turno_tarde": "Turno Tarde (Ingreso 1:00pm | Salida 6:10pm)"
     }
